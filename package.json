@@ -1,7 +1,7 @@
 {
-  "name": "@educandu/educandu-plugin-example",
+  "name": "@musikisum/educandu-plugin-flipbook",
   "version": "0.0.0",
-  "description": "An example plugin for educandu",
+  "description": "A native flipbook plugin for educandu",
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
@@ -15,10 +15,10 @@
   ],
   "license": "MIT",
   "author": "Educandu Team <team@educandu.dev>",
-  "homepage": "https://github.com/educandu/educandu-plugin-example",
+  "homepage": "https://github.com/musikisum/educandu-plugin-flipbook",
   "repository": {
     "type": "git",
-    "url": "https://github.com/educandu/educandu-plugin-example"
+    "url": "https://github.com/musikisum/educandu-plugin-flipbook"
   },
   "dependencies": {},
   "devDependencies": {

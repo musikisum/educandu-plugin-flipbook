@@ -1,52 +1,52 @@
 import joi from 'joi';
 import React from 'react';
-import { ClockCircleOutlined } from '@ant-design/icons';
+import { BookOutlined } from '@ant-design/icons';
 import cloneDeep from '@educandu/educandu/utils/clone-deep.js';
 import { PLUGIN_GROUP } from '@educandu/educandu/domain/constants.js';
 import { couldAccessUrlFromRoom } from '@educandu/educandu/utils/source-utils.js';
 import GithubFlavoredMarkdown from '@educandu/educandu/common/github-flavored-markdown.js';
 
-class ServerTimeInfo {
+class FlipbookInfo {
   static dependencies = [GithubFlavoredMarkdown];
 
-  static typeName = 'educandu/educandu-plugin-example';
+  static typeName = 'musikisum/educandu-plugin-flipbook';
 
-  allowsInput = true;
+  allowsInput = false;
 
   constructor(gfm) {
     this.gfm = gfm;
   }
 
   getDisplayName(t) {
-    return t('educandu/educandu-plugin-example:name');
+    return t('musikisum/educandu-plugin-flipbook:name');
   }
 
   getIcon() {
-    return <ClockCircleOutlined />;
+    return <BookOutlined />;
   }
 
   getGroups() {
-    return [PLUGIN_GROUP.mostUsed, PLUGIN_GROUP.other];
+    return [PLUGIN_GROUP.other];
   }
 
   async resolveDisplayComponent() {
-    return (await import('./example-display.js')).default;
+    return (await import('./flipbook-display.js')).default;
   }
 
   async resolveEditorComponent() {
-    return (await import('./example-editor.js')).default;
+    return (await import('./flipbook-editor.js')).default;
   }
 
   getDefaultContent() {
     return {
-      text: '',
+      pages: [],
       width: 100
     };
   }
 
   validateContent(content) {
     const schema = joi.object({
-      text: joi.string().allow('').required(),
+      pages: joi.array().required(),
       width: joi.number().min(0).max(100).required()
     });
 
@@ -60,17 +60,22 @@ class ServerTimeInfo {
   redactContent(content, targetRoomId) {
     const redactedContent = cloneDeep(content);
 
-    redactedContent.text = this.gfm.redactCdnResources(
-      redactedContent.text,
-      url => couldAccessUrlFromRoom(url, targetRoomId) ? url : ''
-    );
+    redactedContent.pages = redactedContent.pages.map(page => {
+      if (!page.image) {
+        return page;
+      }
+      return {
+        ...page,
+        image: couldAccessUrlFromRoom(page.image, targetRoomId) ? page.image : ''
+      };
+    });
 
     return redactedContent;
   }
 
   getCdnResources(content) {
-    return this.gfm.extractCdnResources(content.text);
+    return content.pages.flatMap(page => page.image ? [page.image] : []);
   }
 }
 
-export default ServerTimeInfo;
+export default FlipbookInfo;
