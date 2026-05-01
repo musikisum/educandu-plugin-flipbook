@@ -7,6 +7,12 @@ import { getAccessibleUrl } from '@educandu/educandu/utils/source-utils.js';
 
 const { PageFlip } = PageFlipModule;
 
+const MIN_PAGES = 2;
+
+function createPadPage(index) {
+  return { key: `__pad_${index}`, type: 'image', image: '', text: '' };
+}
+
 export default function FlipbookPageFlip({ pages, height }) {
   const containerRef = useRef(null);
   const pageFlipRef = useRef(null);
@@ -17,17 +23,21 @@ export default function FlipbookPageFlip({ pages, height }) {
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !pages.length) {
+    if (!container) {
       return;
     }
 
-    // Create a fresh element each time — reusing the same DOM node across
-    // PageFlip instances causes silent init failures after the first destroy().
+    // Always render at least MIN_PAGES so page-flip shows a proper book shape
+    // even before any real pages are added. Extra slots appear as gray placeholders.
+    const renderPages = pages.length >= MIN_PAGES
+      ? pages
+      : [...pages, ...Array.from({ length: MIN_PAGES - pages.length }, (_, i) => createPadPage(i))];
+
     container.innerHTML = '';
     const bookEl = document.createElement('div');
     container.appendChild(bookEl);
 
-    pages.forEach(page => {
+    renderPages.forEach(page => {
       const el = document.createElement('div');
       el.className = 'EP_Musikisum_Flipbook_Page';
 

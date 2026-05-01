@@ -18,9 +18,10 @@ Natives FlipBook-Plugin für die Open Music Academy, gebaut mit dem Educandu-Plu
 
 ## Content-Modell (Seiten)
 Jede Seite ist eines von drei Typen:
-1. **image** – ein Bild (Upload ins Educandu-CDN)
-2. **text** – reines Markdown-Textfeld
-3. **image+text** – Bild + Markdown kombiniert
+
+1. **image** – UrlInput, Bild füllt die ganze Seite. Für reine Bildsammlungen (Notenmanuskripte, Fotos).
+2. **text** – Educandus `MarkdownInput`-Komponente, bringt alles mit: Filepicker, CDN-Zugriff, Bild/Audio/Video-Einbettung. Kein eigener Renderer nötig — nur `gfm.render(text)` beim Anzeigen.
+3. **image+text** – GUI-Layout: CDN-Bild (UrlInput) mit Größen-Slider (% der Seitenbreite) und Positionswahl (links/rechts), Markdown-Text fließt drumherum (CSS float). Sinnvoll wenn man das Layout GUI-gesteuert haben will statt selbst in Markdown zu layouten.
 
 - Seitenanzahl: beliebig dynamisch
 - PDF: vorerst weggelassen
@@ -57,6 +58,66 @@ Educandu-Framework-Dateien werden **nie verändert** — nur öffentliche APIs w
 
 ## Offene Punkte
 - Text-Seiten und Bild+Text-Seiten noch nicht vollständig getestet
-- Text-Rendering: aktuell `textContent` (plain text), kein Markdown — Verbesserung nötig
-- Editor-Preview zeigt leeres Element wenn noch keine Seiten da (sichtbarer Abstand) — evtl. Platzhalter
 - Noch kein npm-Publish / kein Einsatz in Produktion
+
+## Nächste Implementierungsschritte (Reihenfolge)
+
+### 1. Markdown-Rendering für Textseiten
+- `flipbook-page-flip.js`: `textEl.textContent = page.text` → `textEl.innerHTML = gfm.render(page.text)`
+- `GithubFlavoredMarkdown` per `useService` in `FlipbookPageFlip` holen (wie in anderen Plugins)
+- `flipbook-page-flip.js` Props/useEffect-Deps um `gfm` erweitern
+- `FlipbookPageFlip` braucht dann auch `GithubFlavoredMarkdown` als Service
+
+### 2. Overflow-Verhalten Textseiten
+- `flipbook.less`: `.EP_Musikisum_Flipbook_PageText` → `overflow: hidden` statt `overflow: auto`
+- Begründung: Buchseite hat feste Größe, Überlauf wird geclippt — Nutzer sieht im Preview wann die Seite voll ist und fügt eine neue Seite hinzu (analog zum echten Schreiben)
+
+## Geplante Erweiterung: Buchdeckel (Cover)
+
+### Konzept
+Vorder- und Rückdeckel sind zwei normale Textseiten mit farbigem Hintergrund und `data-density="hard"` (hartes Umblättern). Kein Sondertyp — der bestehende Markdown-Mechanismus wird wiederverwendet. Eine Checkbox im Editor aktiviert oder deaktiviert die Deckel.
+
+### Content-Modell (3 neue Felder)
+- `showCover: false` — Checkbox
+- `coverFront: ''` — Markdown-Text für Vorderdeckel
+- `coverBack: ''` — Markdown-Text für Rückdeckel
+
+### Nötige Änderungen
+
+**`flipbook-info.js`**: `getDefaultContent()` und Joi-Schema um die 3 Felder erweitern
+
+**`flipbook-editor.js`**:
+- Checkbox für `showCover`
+- Zwei `MarkdownInput`-Felder (`coverFront`, `coverBack`) — nur sichtbar wenn `showCover`
+
+**`flipbook-page-flip.js`**:
+- Props: `showCover`, `coverFront`, `coverBack`
+- Im useEffect: wenn `showCover`, vor/nach den normalen Seiten je einen Cover-Div einfügen
+  - `el.dataset.density = 'hard'`
+  - CSS-Klasse `EP_Musikisum_Flipbook_Cover` (Hintergrundfarbe)
+  - Inhalt: Markdown als HTML gerendert (oder erstmal als `innerHTML = markdownText`)
+- `pagesKey` um `showCover + coverFront + coverBack` erweitern
+- `MIN_PAGES`: Cover-Seiten zählen mit → wenn Cover aktiv, schon 2 Seiten vorhanden
+
+**`flipbook-display.js`**: `showCover`, `coverFront`, `coverBack` aus content an FlipbookPageFlip weitergeben
+
+**`flipbook.less`**: `.EP_Musikisum_Flipbook_Cover` — dunkler Hintergrund, weiße Schrift, zentriert, `height: 100%`
+
+**`flipbook.yml`**: Keys `showCover`, `coverFront`, `coverBack`
+
+### Abhängigkeit
+Sinnvoll erst nach Markdown-Rendering für Textseiten implementieren, da Cover denselben Render-Mechanismus nutzen.
+
+## Geplante Erweiterung: Audioplayer
+
+Player sitzt **unter dem Flipbook** (nicht auf einer Seite). Zwei Modi — beide optional, per Checkbox aktiviert:
+
+**Modus 1 — Einfacher Player:** Eine Audio-URL, spielt durch, kein Sync. Gleiche URL-Input-Komponente wie bei Bildseiten.
+
+**Modus 2 — Timecode-Sync:** Zusätzlich zu Modus 1 kann der Nutzer Timecodes eingeben, bei denen automatisch weitergeblättert wird (`timeupdate`-Event → `currentTime >= timecodes[currentPage]` → `pageFlip.flipNext()`). Timecodes sind absolute Zeitangaben (z.B. `0:32`) ab Audio-Start.
+
+**UI für Timecode-Eingabe:** Separates Overlay (Modal/Drawer) — kein Inline-Feld pro Seite, da das Feature nur selten gebraucht wird. Ein ähnliches Overlay wurde bereits in einem anderen OMA-Plugin realisiert → dort abkupfern (Plugin noch zu identifizieren).
+
+**Content-Modell (neue Felder):**
+- `audioUrl: ''`
+- `audioTimecodes: []` — Array von Sekunden (eine Zahl pro Seite)
