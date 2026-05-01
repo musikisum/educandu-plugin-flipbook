@@ -20,7 +20,9 @@
     "type": "git",
     "url": "https://github.com/musikisum/educandu-plugin-flipbook"
   },
-  "dependencies": {},
+  "dependencies": {
+    "page-flip": "^2.0.7"
+  },
   "devDependencies": {
     "@ant-design/icons": "5.5.1",
     "@educandu/dev-tools": "^15.1.0",

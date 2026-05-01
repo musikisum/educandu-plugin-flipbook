@@ -45,8 +45,15 @@ class FlipbookInfo {
   }
 
   validateContent(content) {
+    const pageSchema = joi.object({
+      key: joi.string().required(),
+      type: joi.string().valid('image', 'text', 'image+text').required(),
+      image: joi.string().allow('').optional(),
+      text: joi.string().allow('').optional()
+    });
+
     const schema = joi.object({
-      pages: joi.array().required(),
+      pages: joi.array().items(pageSchema).required(),
       width: joi.number().min(0).max(100).required()
     });
 

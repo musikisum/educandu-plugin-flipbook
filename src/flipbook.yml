@@ -2,3 +2,33 @@ musikisum/educandu-plugin-flipbook:
   name:
     en: Flipbook plugin
     de: Flipbook-Plugin
+  noPages:
+    en: No pages have been added yet.
+    de: Es wurden noch keine Seiten hinzugefügt.
+  page:
+    en: Page
+    de: Seite
+  image:
+    en: Image
+    de: Bild
+  text:
+    en: Text
+    de: Text
+  pageType_image:
+    en: Image
+    de: Bild
+  pageType_text:
+    en: Text
+    de: Text
+  pageType_image+text:
+    en: Image + Text
+    de: Bild + Text
+  addPage_image:
+    en: Add image page
+    de: Bildseite hinzufügen
+  addPage_text:
+    en: Add text page
+    de: Textseite hinzufügen
+  addPage_image+text:
+    en: Add image + text page
+    de: Bild+Text-Seite hinzufügen

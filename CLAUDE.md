@@ -37,7 +37,16 @@ Jede Seite ist eines von drei Typen:
 - `src/flipbook.less` — Styles, Namespace: `EP_Musikisum_Flipbook_`
 - `src/translations.json` — Übersetzungen EN/DE
 
-## Status
+## Wichtige Konvention
+Educandu-Framework-Dateien werden **nie verändert** — nur öffentliche APIs werden genutzt (`useService`, `getAccessibleUrl`, Komponenten aus `components/` usw.), damit Framework-Updates das Plugin nicht brechen.
+
+## Status (Stand 2026-05-01)
 - Repo auf musikisum-Account ✓
 - Template-Dateien umbenannt, Plugin läuft im dev-server ✓
-- **Nächster Schritt:** `react-pageflip` einbinden, Display- und Editor-Komponente implementieren
+- `page-flip` (v2.0.7) als Dependency eingebunden ✓
+- `flipbook-page-flip.js`: React-Wrapper um page-flip, erstellt DOM imperativ (kein React/page-flip-Konflikt), nutzt `getAccessibleUrl` für CDN- und externe URLs ✓
+- `flipbook-display.js`: zeigt FlipBook oder Platzhaltertext ✓
+- `flipbook-editor.js`: Seitenverwaltung mit UrlInput (CDN + extern), MarkdownInput, Typ-Selector, Auf/Ab, Löschen ✓
+- Bilder (externe URLs) funktionieren stabil ✓
+- **Noch zu testen:** Text-Seiten, Bild+Text-Seiten
+- **Nächster Schritt:** Text-Rendering verbessern (aktuell plain text, kein Markdown)
