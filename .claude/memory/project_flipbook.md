@@ -49,8 +49,8 @@ Jede Seite ist eines von drei Typen:
 - `translations.json`
 - CSS-Klassen-Namespace: `EP_Musikisum_Flipbook_`
 
-## Status (Stand 2026-04-30)
+## Status (Stand 2026-05-01)
 - Repo umgebogen auf musikisum-Account ✓
 - Architektur besprochen ✓
-- Implementierung noch nicht begonnen
-- Nächster Schritt: react-pageflip einbinden, Dateien umbenennen, Content-Modell implementieren
+- Template-Dateien umbenannt, Plugin läuft im dev-server ✓
+- Nächster Schritt: react-pageflip einbinden, Display- und Editor-Komponente implementieren
