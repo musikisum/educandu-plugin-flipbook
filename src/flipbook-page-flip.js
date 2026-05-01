@@ -13,22 +13,19 @@ export default function FlipbookPageFlip({ pages, height }) {
   const [currentPage, setCurrentPage] = useState(0);
   const clientConfig = useService(ClientConfig);
 
-  const structureKey = pages.map(p => `${p.key}:${p.type}`).join('|');
+  const pagesKey = pages.map(p => `${p.key}:${p.type}:${p.image}:${p.text}`).join('|');
 
-  // Full reinit only when page structure (count/type/order) or height changes.
   useEffect(() => {
     const container = containerRef.current;
-
-    if (pageFlipRef.current) {
-      pageFlipRef.current.destroy();
-      pageFlipRef.current = null;
-    }
-
     if (!container || !pages.length) {
       return;
     }
 
+    // Create a fresh element each time — reusing the same DOM node across
+    // PageFlip instances causes silent init failures after the first destroy().
     container.innerHTML = '';
+    const bookEl = document.createElement('div');
+    container.appendChild(bookEl);
 
     pages.forEach(page => {
       const el = document.createElement('div');
@@ -48,10 +45,10 @@ export default function FlipbookPageFlip({ pages, height }) {
         el.appendChild(textEl);
       }
 
-      container.appendChild(el);
+      bookEl.appendChild(el);
     });
 
-    const pageFlip = new PageFlip(container, {
+    const pageFlip = new PageFlip(bookEl, {
       width: 400,
       height: height ?? 550,
       size: 'stretch',
@@ -62,90 +59,42 @@ export default function FlipbookPageFlip({ pages, height }) {
       mobileScrollSupport: true,
     });
 
-    pageFlip.loadFromHTML(container.querySelectorAll('.EP_Musikisum_Flipbook_Page'));
+    pageFlip.loadFromHTML(bookEl.querySelectorAll('.EP_Musikisum_Flipbook_Page'));
     pageFlip.on('flip', e => setCurrentPage(e.data));
     pageFlipRef.current = pageFlip;
 
     return () => {
       pageFlip.destroy();
       pageFlipRef.current = null;
+      setCurrentPage(0);
     };
-  // pages intentionally excluded: URL/text changes are handled by the effect below.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [structureKey, height, clientConfig]);
-
-  // Lightweight update: sync image URLs and text into existing page elements
-  // without tearing down and recreating the page-flip instance.
-  useEffect(() => {
-    if (!pageFlipRef.current || !containerRef.current) {
-      return;
-    }
-
-    const pageElements = containerRef.current.querySelectorAll('.EP_Musikisum_Flipbook_Page');
-
-    pages.forEach((page, i) => {
-      const el = pageElements[i];
-      if (!el) {
-        return;
-      }
-
-      const img = el.querySelector('img');
-      if (page.image) {
-        const src = getAccessibleUrl({ url: page.image, cdnRootUrl: clientConfig.cdnRootUrl });
-        if (img) {
-          img.src = src;
-        } else {
-          const newImg = document.createElement('img');
-          newImg.src = src;
-          newImg.alt = '';
-          el.insertBefore(newImg, el.firstChild);
-        }
-      } else if (img) {
-        img.remove();
-      }
-
-      const textEl = el.querySelector('.EP_Musikisum_Flipbook_PageText');
-      if (page.text) {
-        if (textEl) {
-          textEl.textContent = page.text;
-        } else {
-          const newText = document.createElement('div');
-          newText.className = 'EP_Musikisum_Flipbook_PageText';
-          newText.textContent = page.text;
-          el.appendChild(newText);
-        }
-      } else if (textEl) {
-        textEl.remove();
-      }
-    });
-  }, [pages, clientConfig]);
-
-  if (!pages.length) {
-    return null;
-  }
+  }, [pagesKey, height, clientConfig]);
 
   return (
     <div className="EP_Musikisum_Flipbook_Container">
       <div ref={containerRef} className="EP_Musikisum_Flipbook_Book" />
-      <div className="EP_Musikisum_Flipbook_Controls">
-        <button
-          className="EP_Musikisum_Flipbook_NavBtn"
-          disabled={currentPage === 0}
-          onClick={() => pageFlipRef.current?.flipPrev()}
-          >
-          ‹
-        </button>
-        <span className="EP_Musikisum_Flipbook_PageIndicator">
-          {currentPage + 1} / {pages.length}
-        </span>
-        <button
-          className="EP_Musikisum_Flipbook_NavBtn"
-          disabled={currentPage >= pages.length - 1}
-          onClick={() => pageFlipRef.current?.flipNext()}
-          >
-          ›
-        </button>
-      </div>
+      {!!pages.length && (
+        <div className="EP_Musikisum_Flipbook_Controls">
+          <button
+            className="EP_Musikisum_Flipbook_NavBtn"
+            disabled={currentPage === 0}
+            onClick={() => pageFlipRef.current?.flipPrev()}
+            >
+            ‹
+          </button>
+          <span className="EP_Musikisum_Flipbook_PageIndicator">
+            {currentPage + 1} / {pages.length}
+          </span>
+          <button
+            className="EP_Musikisum_Flipbook_NavBtn"
+            disabled={currentPage >= pages.length - 1}
+            onClick={() => pageFlipRef.current?.flipNext()}
+            >
+            ›
+          </button>
+        </div>
+      )}
     </div>
   );
 }

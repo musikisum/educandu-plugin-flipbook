@@ -12,8 +12,9 @@ Natives FlipBook-Plugin für die Open Music Academy, gebaut mit dem Educandu-Plu
 - Vollständig implementiertes Plugin mit gleicher Struktur (Info-Klasse, Editor, Display, LESS, Übersetzungen EN/DE)
 
 ## Bibliothek
-- **StPageFlip** in der React-Variante (`react-pageflip`)
-- Navigation: Seitenklick, Drag und Vor/Zurück-Buttons (alles in der Library eingebaut)
+- **page-flip** v2.0.7 (npm: `page-flip`, NICHT `react-pageflip` – das ist veraltet)
+- DOM wird imperativ in `useEffect` erstellt (kein React/page-flip-Konflikt)
+- Navigation: Vor/Zurück-Buttons selbst gebaut; Seitenklick und Drag durch die Library
 
 ## Content-Modell (Seiten)
 Jede Seite ist eines von drei Typen:
@@ -32,21 +33,30 @@ Jede Seite ist eines von drei Typen:
 
 ## Dateistruktur
 - `src/flipbook-info.js` — Plugin-Klasse, typeName: `musikisum/educandu-plugin-flipbook`
-- `src/flipbook-display.js` — Display-Komponente (Platzhalter, noch nicht implementiert)
-- `src/flipbook-editor.js` — Editor-Komponente (Platzhalter, noch nicht implementiert)
+- `src/flipbook-display.js` — Display-Komponente (zeigt FlipBook oder Platzhaltertext)
+- `src/flipbook-editor.js` — Editor mit Drag&Drop-Seitenliste und Live-Preview
+- `src/flipbook-page-flip.js` — React-Wrapper um page-flip (imperativer DOM, kein Konflikt)
 - `src/flipbook.less` — Styles, Namespace: `EP_Musikisum_Flipbook_`
-- `src/translations.json` — Übersetzungen EN/DE
+- `src/flipbook.yml` — Übersetzungen EN/DE (wird zu translations.json kompiliert, JSON nie manuell bearbeiten)
+
+## Kritische Implementierungsdetails
+- `FlipbookPageFlip` initialisiert page-flip jedes Mal auf einem **frisch erstellten** `bookEl` (kein Reuse des React-ref-Elements) — sonst schlägt die Reinitialisierung nach Drag&Drop stumm fehl
+- `pagesKey` = alle Seiten als `key:type:image:text` verknüpft — löst komplette Neuinitialisierung bei jeder inhaltlichen Änderung aus
+- `getAccessibleUrl` aus Educandu für alle Bild-URLs (CDN + extern) — nie direkte URLs verwenden
 
 ## Wichtige Konvention
 Educandu-Framework-Dateien werden **nie verändert** — nur öffentliche APIs werden genutzt (`useService`, `getAccessibleUrl`, Komponenten aus `components/` usw.), damit Framework-Updates das Plugin nicht brechen.
 
 ## Status (Stand 2026-05-01)
 - Repo auf musikisum-Account ✓
-- Template-Dateien umbenannt, Plugin läuft im dev-server ✓
-- `page-flip` (v2.0.7) als Dependency eingebunden ✓
-- `flipbook-page-flip.js`: React-Wrapper um page-flip, erstellt DOM imperativ (kein React/page-flip-Konflikt), nutzt `getAccessibleUrl` für CDN- und externe URLs ✓
-- `flipbook-display.js`: zeigt FlipBook oder Platzhaltertext ✓
-- `flipbook-editor.js`: Seitenverwaltung mit UrlInput (CDN + extern), MarkdownInput, Typ-Selector, Auf/Ab, Löschen ✓
-- Bilder (externe URLs) funktionieren stabil ✓
-- **Noch zu testen:** Text-Seiten, Bild+Text-Seiten
-- **Nächster Schritt:** Text-Rendering verbessern (aktuell plain text, kein Markdown)
+- Plugin läuft im dev-server ✓
+- Bilder (externe URLs + CDN) funktionieren stabil ✓
+- Drag&Drop-Reorder funktioniert, Preview bleibt erhalten ✓
+- Erste Seite erscheint sofort im Preview nach dem Hinzufügen ✓
+- Übersetzungen vollständig (EN/DE): name, noPages, page, image, text, pageType, pageType_*, addPage_*, height, preview ✓
+
+## Offene Punkte
+- Text-Seiten und Bild+Text-Seiten noch nicht vollständig getestet
+- Text-Rendering: aktuell `textContent` (plain text), kein Markdown — Verbesserung nötig
+- Editor-Preview zeigt leeres Element wenn noch keine Seiten da (sichtbarer Abstand) — evtl. Platzhalter
+- Noch kein npm-Publish / kein Einsatz in Produktion

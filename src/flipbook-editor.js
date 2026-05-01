@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useId, useRef } from 'react';
 import { Button, Form, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined } from '@ant-design/icons';
@@ -27,12 +27,6 @@ export default function FlipbookEditor({ content, onContentChanged }) {
   const { t } = useTranslation('musikisum/educandu-plugin-flipbook');
   const pxFormatter = useNumberWithUnitFormat({ unit: 'px', useGrouping: false });
   const { pages, width, height = 550 } = content;
-
-  const [previewPages, setPreviewPages] = useState(pages);
-  useEffect(() => {
-    const timer = setTimeout(() => setPreviewPages(pages), 400);
-    return () => clearTimeout(timer);
-  }, [pages]);
 
   const updateContent = updates => onContentChanged({ ...content, ...updates });
 
@@ -72,13 +66,13 @@ export default function FlipbookEditor({ content, onContentChanged }) {
       onMoveUp={handleMoveUp}
       onMoveDown={handleMoveDown}
       onDelete={handleDeletePage}
-      >
+    >
       <Form.Item label={t('pageType')} {...FORM_ITEM_LAYOUT}>
         <Select
           value={page.type}
           options={PAGE_TYPES.map(pt => ({ value: pt, label: t(`pageType_${pt}`) }))}
           onChange={type => handlePageChange(page.key, { type })}
-          />
+        />
       </Form.Item>
 
       {(page.type === 'image' || page.type === 'image+text') && (
@@ -87,7 +81,7 @@ export default function FlipbookEditor({ content, onContentChanged }) {
             value={page.image}
             allowedSourceTypes={IMAGE_SOURCE_TYPES}
             onChange={url => handlePageChange(page.key, { image: url })}
-            />
+          />
         </Form.Item>
       )}
 
@@ -97,7 +91,7 @@ export default function FlipbookEditor({ content, onContentChanged }) {
             value={page.text}
             renderAnchors
             onChange={e => handlePageChange(page.key, { text: e.target.value })}
-            />
+          />
         </Form.Item>
       )}
     </ItemPanel>
@@ -115,7 +109,7 @@ export default function FlipbookEditor({ content, onContentChanged }) {
         <Form.Item
           label={<Info tooltip={t('common:widthInfo')}>{t('common:width')}</Info>}
           {...FORM_ITEM_LAYOUT}
-          >
+        >
           <ObjectWidthSlider value={width} onChange={value => updateContent({ width: value })} />
         </Form.Item>
         <Form.Item label={t('height')} {...FORM_ITEM_LAYOUT}>
@@ -128,16 +122,14 @@ export default function FlipbookEditor({ content, onContentChanged }) {
             value={height}
             formatter={pxFormatter}
             onChange={value => updateContent({ height: value })}
-            />
+          />
         </Form.Item>
       </Form>
 
       <div className="EP_Musikisum_Flipbook_EditorPreview">
         <div className="EP_Musikisum_Flipbook_EditorPreviewLabel">{t('preview')}</div>
         <div className="EP_Musikisum_Flipbook_EditorPreviewBook">
-          {previewPages.length
-            ? <FlipbookPageFlip pages={previewPages} />
-            : <p className="EP_Musikisum_Flipbook_Empty">{t('noPages')}</p>}
+          <FlipbookPageFlip pages={pages} height={height} />
         </div>
       </div>
 

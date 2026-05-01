@@ -43,6 +43,18 @@
     "addPage_image+text": {
       "en": "Add image + text page",
       "de": "Bild+Text-Seite hinzufügen"
+    },
+    "pageType": {
+      "en": "Page type",
+      "de": "Seitentyp"
+    },
+    "height": {
+      "en": "Height",
+      "de": "Höhe"
+    },
+    "preview": {
+      "en": "Preview",
+      "de": "Vorschau"
     }
   }
 }

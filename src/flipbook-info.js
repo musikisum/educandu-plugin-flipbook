@@ -26,7 +26,7 @@ class FlipbookInfo {
   }
 
   getGroups() {
-    return [PLUGIN_GROUP.other];
+    return [PLUGIN_GROUP.textImage];
   }
 
   async resolveDisplayComponent() {
