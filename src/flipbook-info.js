@@ -40,7 +40,8 @@ class FlipbookInfo {
   getDefaultContent() {
     return {
       pages: [],
-      width: 100
+      width: 100,
+      height: 550
     };
   }
 
@@ -54,7 +55,8 @@ class FlipbookInfo {
 
     const schema = joi.object({
       pages: joi.array().items(pageSchema).required(),
-      width: joi.number().min(0).max(100).required()
+      width: joi.number().min(0).max(100).required(),
+      height: joi.number().min(100).max(2000).optional()
     });
 
     joi.attempt(content, schema, { abortEarly: false, convert: false, noDefaults: true });

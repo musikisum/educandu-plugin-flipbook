@@ -7,17 +7,26 @@ import { getAccessibleUrl } from '@educandu/educandu/utils/source-utils.js';
 
 const { PageFlip } = PageFlipModule;
 
-// Renders the page-flip book imperatively to avoid React/page-flip DOM conflicts.
-// Page content is created via the DOM API so page-flip can freely manipulate elements.
-export default function FlipbookPageFlip({ pages }) {
+export default function FlipbookPageFlip({ pages, height }) {
   const containerRef = useRef(null);
   const pageFlipRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(0);
   const clientConfig = useService(ClientConfig);
 
+  const structureKey = pages.map(p => `${p.key}:${p.type}`).join('|');
+
+  // Full reinit only when page structure (count/type/order) or height changes.
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !pages.length) return;
+
+    if (pageFlipRef.current) {
+      pageFlipRef.current.destroy();
+      pageFlipRef.current = null;
+    }
+
+    if (!container || !pages.length) {
+      return;
+    }
 
     container.innerHTML = '';
 
@@ -44,7 +53,7 @@ export default function FlipbookPageFlip({ pages }) {
 
     const pageFlip = new PageFlip(container, {
       width: 400,
-      height: 550,
+      height: height ?? 550,
       size: 'stretch',
       minWidth: 100,
       maxWidth: 1000,
@@ -61,6 +70,54 @@ export default function FlipbookPageFlip({ pages }) {
       pageFlip.destroy();
       pageFlipRef.current = null;
     };
+  // pages intentionally excluded: URL/text changes are handled by the effect below.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [structureKey, height, clientConfig]);
+
+  // Lightweight update: sync image URLs and text into existing page elements
+  // without tearing down and recreating the page-flip instance.
+  useEffect(() => {
+    if (!pageFlipRef.current || !containerRef.current) {
+      return;
+    }
+
+    const pageElements = containerRef.current.querySelectorAll('.EP_Musikisum_Flipbook_Page');
+
+    pages.forEach((page, i) => {
+      const el = pageElements[i];
+      if (!el) {
+        return;
+      }
+
+      const img = el.querySelector('img');
+      if (page.image) {
+        const src = getAccessibleUrl({ url: page.image, cdnRootUrl: clientConfig.cdnRootUrl });
+        if (img) {
+          img.src = src;
+        } else {
+          const newImg = document.createElement('img');
+          newImg.src = src;
+          newImg.alt = '';
+          el.insertBefore(newImg, el.firstChild);
+        }
+      } else if (img) {
+        img.remove();
+      }
+
+      const textEl = el.querySelector('.EP_Musikisum_Flipbook_PageText');
+      if (page.text) {
+        if (textEl) {
+          textEl.textContent = page.text;
+        } else {
+          const newText = document.createElement('div');
+          newText.className = 'EP_Musikisum_Flipbook_PageText';
+          newText.textContent = page.text;
+          el.appendChild(newText);
+        }
+      } else if (textEl) {
+        textEl.remove();
+      }
+    });
   }, [pages, clientConfig]);
 
   if (!pages.length) {
@@ -94,6 +151,7 @@ export default function FlipbookPageFlip({ pages }) {
 }
 
 FlipbookPageFlip.propTypes = {
+  height: PropTypes.number,
   pages: PropTypes.arrayOf(PropTypes.shape({
     key: PropTypes.string.isRequired,
     type: PropTypes.oneOf(['image', 'text', 'image+text']).isRequired,

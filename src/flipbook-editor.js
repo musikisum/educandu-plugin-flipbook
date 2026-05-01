@@ -5,16 +5,18 @@ import { PlusOutlined } from '@ant-design/icons';
 import Info from '@educandu/educandu/components/info.js';
 import UrlInput from '@educandu/educandu/components/url-input.js';
 import ItemPanel from '@educandu/educandu/components/item-panel.js';
+import StepSlider from '@educandu/educandu/components/step-slider.js';
 import { FORM_ITEM_LAYOUT, SOURCE_TYPE } from '@educandu/educandu/domain/constants.js';
 import MarkdownInput from '@educandu/educandu/components/markdown-input.js';
 import { sectionEditorProps } from '@educandu/educandu/ui/default-prop-types.js';
 import ObjectWidthSlider from '@educandu/educandu/components/object-width-slider.js';
 import DragAndDropContainer from '@educandu/educandu/components/drag-and-drop-container.js';
 import { swapItemsAt, removeItemAt, moveItem } from '@educandu/educandu/utils/array-utils.js';
+import { useNumberWithUnitFormat } from '@educandu/educandu/components/locale-context.js';
 import FlipbookPageFlip from './flipbook-page-flip.js';
 
 const PAGE_TYPES = ['image', 'text', 'image+text'];
-const IMAGE_SOURCE_TYPES = [SOURCE_TYPE.mediaLibrary, SOURCE_TYPE.roomMedia, SOURCE_TYPE.external];
+const IMAGE_SOURCE_TYPES = [SOURCE_TYPE.mediaLibrary, SOURCE_TYPE.roomMedia, SOURCE_TYPE.external, SOURCE_TYPE.wikimedia];
 
 function createPage(type) {
   return { key: crypto.randomUUID(), type, image: '', text: '' };
@@ -23,7 +25,8 @@ function createPage(type) {
 export default function FlipbookEditor({ content, onContentChanged }) {
   const droppableIdRef = useRef(useId());
   const { t } = useTranslation('musikisum/educandu-plugin-flipbook');
-  const { pages, width } = content;
+  const pxFormatter = useNumberWithUnitFormat({ unit: 'px', useGrouping: false });
+  const { pages, width, height = 550 } = content;
 
   const [previewPages, setPreviewPages] = useState(pages);
   useEffect(() => {
@@ -114,6 +117,18 @@ export default function FlipbookEditor({ content, onContentChanged }) {
           {...FORM_ITEM_LAYOUT}
           >
           <ObjectWidthSlider value={width} onChange={value => updateContent({ width: value })} />
+        </Form.Item>
+        <Form.Item label={t('height')} {...FORM_ITEM_LAYOUT}>
+          <StepSlider
+            min={100}
+            step={10}
+            max={2000}
+            marksStep={200}
+            labelsStep={400}
+            value={height}
+            formatter={pxFormatter}
+            onChange={value => updateContent({ height: value })}
+            />
         </Form.Item>
       </Form>
 
