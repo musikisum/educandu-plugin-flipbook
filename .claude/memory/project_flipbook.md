@@ -1,56 +1,60 @@
 ---
 name: FlipBook Plugin – Projektkontext
-description: Ziel, Architekturentscheidungen und offene Aufgaben für das native educandu-plugin-flipbook
+description: Ziel, Architekturentscheidungen, aktueller Stand und offene Aufgaben für das native educandu-plugin-flipbook
 type: project
-originSessionId: 8cc1f2d6-c67d-44f2-bef5-450d997bd245
 ---
-Natives FlipBook-Plugin für die Open Music Academy, gebaut mit dem Educandu-Plugin-Template. Es soll keine iFrame-Lösung sein, sondern ein vollständig nativer React-Ansatz.
+Natives FlipBook-Plugin für die Open Music Academy, gebaut mit dem Educandu-Plugin-Template. Kein iFrame — vollständig nativer React-Ansatz.
 
-**Why:** Das embedded-html-Plugin (C:\dev\educandu-plugin-embedded-html) hat ein FlipBook via iFrame gezeigt — das neue Plugin soll dasselbe nativ tun, um besser in das Educandu-Ökosystem integriert zu sein.
+**Why:** Das embedded-html-Plugin hat ein FlipBook via iFrame gezeigt — das neue Plugin soll dasselbe nativ tun, um besser in das Educandu-Ökosystem integriert zu sein.
 
 **How to apply:** Alle Entscheidungen orientieren sich am embedded-html-Plugin als Referenz-Implementierung (gleicher Plugin-Aufbau, gleiche Konventionen).
 
 ## Repository
 - **Remote:** git@github.com:musikisum/educandu-plugin-flipbook.git
-- **Lokal:** C:\dev\educandu-plugin-flipbook
+- **Lokal (Arbeit):** d:\dev\educandu-plugin-flipbook
 - **Branch:** main
 
 ## Referenz-Plugin
-- **Pfad:** C:\dev\educandu-plugin-embedded-html
+- **Pfad:** d:\dev\educandu-plugin-embedded-html (NICHT C:\dev\...)
 - Vollständig implementiertes Plugin mit Info-Klasse, Editor, Display, LESS, Übersetzungen (EN/DE)
-- Selbes Template-Grundgerüst
 
 ## Bibliothek
-- **StPageFlip** in der React-Variante (wahrscheinlich `react-pageflip` / `@dflect/react-pageflip`)
+- **page-flip v2.0.7** (npm-Paket `page-flip`, NICHT `react-pageflip`)
+- Imperatives DOM-Rendering in `flipbook-page-flip.js`, kein React/page-flip-Konflikt
 - Navigation: Seitenklick, Drag (aus Library), Vor/Zurück-Buttons
-- Der User bestätigte: die Library sieht sehr gut aus und hat eine React-Version
 
 ## Content-Modell (Seiten)
 Jede Seite ist eines von drei Typen:
-1. **image** – ein Bild (Upload ins Educandu-CDN)
+1. **image** – ein Bild (CDN oder externe URL)
 2. **text** – reines Markdown-Textfeld
 3. **image+text** – Bild + Markdown kombiniert
 
-- Seitenanzahl: beliebig (dynamisch)
-- PDF: vorerst weggelassen (zu aufwendig)
+## Implementierungsstand (2026-05-01)
 
-## Editor-UI
-- Drag&Drop-Zone mit Plus-Button zum Hinzufügen von Seiten
-- Für Bilder: Educandu File-Upload-Dialog / File-Select
-- Für Text und Bild+Text: Educandu Markdown-Eingabefeld (MarkdownInput)
-- Alle Editor-Komponenten sollen aus dem Educandu-Framework kommen (keine Eigenbauten wo es geht)
+### Was funktioniert ✓
+- Plugin läuft im dev-server
+- `page-flip` eingebunden, Display funktioniert
+- Bilder (externe URLs + CDN) werden angezeigt
+- `object-fit: cover` auf Bildern (füllt Seite, schneidet ggf. Ränder)
+- Editor: DragAndDropContainer + ItemPanel (wie Ear-Training-Plugin)
+- Editor: zentrierte 320px-Vorschau oben, debounced (400ms)
+- Scrollbalken-Fix: `.stf__parent { overflow: hidden }` in Display und EditorPreviewBook
 
-## Dateinamen-Konvention (angelehnt an embedded-html)
-- `flipbook-info.js`
-- `flipbook-display.js`
-- `flipbook-editor.js`
-- `flipbook-icon.js`
-- `flipbook.less`
-- `translations.json`
-- CSS-Klassen-Namespace: `EP_Musikisum_Flipbook_`
+### Wichtige Erkenntnis: page-flip überschreibt display
+Die Library setzt `display: block` via `style.cssText` (inline) direkt auf das Seiten-Element — das überschreibt `display: flex` aus CSS-Klassen. Deshalb können keine Flex-Layouts direkt auf `.EP_Musikisum_Flipbook_Page` verwendet werden. Lösungsansatz für später: innerer Wrapper-Div mit `position: absolute; inset: 0; display: flex` — aber noch NICHT implementiert, da es den Display verschlechtert hat (Bilder sahen schlechter aus). Aktuell bleibt das simple `img`-Layout.
 
-## Status (Stand 2026-05-01)
-- Repo umgebogen auf musikisum-Account ✓
-- Architektur besprochen ✓
-- Template-Dateien umbenannt, Plugin läuft im dev-server ✓
-- Nächster Schritt: react-pageflip einbinden, Display- und Editor-Komponente implementieren
+### Offene Aufgaben (nächste Session)
+1. **Text-Rendering**: Aktuell `textContent = page.text` (plain text). Markdown muss noch gerendert werden. Prüfen welche Markdown-Bibliothek in Educandu vorhanden ist (`marked`?).
+2. **Übersetzungsschlüssel**: `pageType` und `preview` fehlen in `translations.json` — werden im Editor als Rohschlüssel angezeigt. Müssen noch ergänzt werden (DE/EN).
+3. **Bild-Clipping im Editor-Preview**: Der kleine 320px-Preview schneidet Bilder ab. Im Display (volle Breite) sieht alles gut aus. Das `PageInner`-Wrapper-Konzept (position absolute, inset 0, flex) wäre der richtige Fix, hat aber den Display-Look verschlechtert — muss sorgfältig getestet werden.
+
+## Dateistruktur
+- `src/flipbook-info.js` — Plugin-Klasse, typeName: `musikisum/educandu-plugin-flipbook`
+- `src/flipbook-display.js` — Display-Komponente
+- `src/flipbook-editor.js` — Editor mit DragAndDrop + debounced Preview
+- `src/flipbook-page-flip.js` — Imperatives React-Wrapper um page-flip
+- `src/flipbook.less` — Styles, Namespace: `EP_Musikisum_Flipbook_`
+- `src/translations.json` — Übersetzungen EN/DE
+
+## Wichtige Konvention
+Educandu-Framework-Dateien werden **nie verändert** — nur öffentliche APIs genutzt.

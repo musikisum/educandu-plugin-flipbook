@@ -1,4 +1,10 @@
 .EP_Musikisum_Flipbook_Display {
+  overflow: hidden;
+
+  .stf__parent {
+    overflow: hidden;
+  }
+
   .EP_Musikisum_Flipbook_Container {
     position: relative;
     width: 100%;
@@ -69,35 +75,32 @@
 }
 
 .EP_Musikisum_Flipbook_Editor {
-  .EP_Musikisum_Flipbook_PageList {
+  .EP_Musikisum_Flipbook_EditorPreview {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  .EP_Musikisum_Flipbook_PageItem {
-    border: 1px solid #d9d9d9;
-    border-radius: 8px;
-    padding: 12px 16px;
-  }
-
-  .EP_Musikisum_Flipbook_PageItemHeader {
-    display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
+    margin-bottom: 24px;
   }
 
-  .EP_Musikisum_Flipbook_PageNumber {
-    font-weight: 500;
-    min-width: 60px;
+  .EP_Musikisum_Flipbook_EditorPreviewLabel {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 8px;
+  }
+
+  .EP_Musikisum_Flipbook_EditorPreviewBook {
+    width: 320px;
+    overflow: hidden;
+
+    .stf__parent {
+      overflow: hidden;
+    }
   }
 
   .EP_Musikisum_Flipbook_AddButtons {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    margin-top: 8px;
+    margin-top: 16px;
   }
 }
