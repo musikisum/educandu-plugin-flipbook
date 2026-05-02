@@ -1,6 +1,16 @@
 .EP_Musikisum_Flipbook_Page {
+  position: relative;
   overflow: hidden;
   background: #f0f0f0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.12) 0, transparent 8px, transparent calc(100% - 8px), rgba(0, 0, 0, 0.12) 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
 
   img {
     width: 100%;
@@ -9,9 +19,9 @@
 }
 
 .EP_Musikisum_Flipbook_PageText {
-  background: #fff;
+  background: #f9f6ee;
   padding: 16px;
-  overflow: auto;
+  overflow: hidden;
   height: 100%;
   box-sizing: border-box;
 }
@@ -33,10 +43,12 @@
   .EP_Musikisum_Flipbook_Container {
     position: relative;
     width: 100%;
+
   }
 
   .EP_Musikisum_Flipbook_Book {
     width: 100%;
+    box-shadow: -10px 0 20px rgba(0, 0, 0, 0.15), 10px 0 20px rgba(0, 0, 0, 0.15);
   }
 
   .EP_Musikisum_Flipbook_Controls {

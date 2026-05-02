@@ -48,29 +48,28 @@ Jede Seite ist eines von drei Typen:
 ## Wichtige Konvention
 Educandu-Framework-Dateien werden **nie verändert** — nur öffentliche APIs werden genutzt (`useService`, `getAccessibleUrl`, Komponenten aus `components/` usw.), damit Framework-Updates das Plugin nicht brechen.
 
-## Status (Stand 2026-05-01)
+## Status (Stand 2026-05-02)
 - Repo auf musikisum-Account ✓
 - Plugin läuft im dev-server ✓
 - Bilder (externe URLs + CDN) funktionieren stabil ✓
 - Drag&Drop-Reorder funktioniert, Preview bleibt erhalten ✓
 - Erste Seite erscheint sofort im Preview nach dem Hinzufügen ✓
 - Übersetzungen vollständig (EN/DE): name, noPages, page, image, text, pageType, pageType_*, addPage_*, height, preview ✓
+- Markdown-Rendering für Textseiten implementiert (`gfm.render()` + `renderMedia: true`) ✓
+- Papierton (#f9f6ee) für Textseiten (auf outer page-div per inline style + CSS) ✓
+- Overflow: hidden auf Textseiten (Buchseite clippt bei Überlauf) ✓
+- MIN_PAGES = 4 (soft flip statt hard end-of-book animation bei wenigen Seiten) ✓
+- Äußerer Buch-Schatten (box-shadow links/rechts auf .EP_Musikisum_Flipbook_Book) ✓
+- Knickfalte (Buchfalte): ::before gradient auf jeder Seite, 8px, flipped mit Seite mit ✓
 
 ## Offene Punkte
 - Text-Seiten und Bild+Text-Seiten noch nicht vollständig getestet
 - Noch kein npm-Publish / kein Einsatz in Produktion
 
+## Bekannte Limitation: Editor-Preview für Textseiten
+Der Preview (320px) zeigt Text-Seiten nicht maßstabsgetreu zum Display. Grund: page-flip skaliert die Seitengeometrie mit dem Container, aber CSS-Schriftgrößen skalieren nicht mit. Außerdem wechselt page-flip bei unterschiedlichen Containerbreiten zwischen Portrait- (1 Seite) und Landscape-Modus (2 Seiten nebeneinander), was zusätzlich den Zeilenumbruch verändert. Ein Zeichenzähler hilft nicht, weil Markdown-Formatierungen (H1, Zitat, Listen etc.) den Platzbedarf unvorhersehbar verändern. Workaround: Überlauf in der Display-Ansicht prüfen.
+
 ## Nächste Implementierungsschritte (Reihenfolge)
-
-### 1. Markdown-Rendering für Textseiten
-- `flipbook-page-flip.js`: `textEl.textContent = page.text` → `textEl.innerHTML = gfm.render(page.text)`
-- `GithubFlavoredMarkdown` per `useService` in `FlipbookPageFlip` holen (wie in anderen Plugins)
-- `flipbook-page-flip.js` Props/useEffect-Deps um `gfm` erweitern
-- `FlipbookPageFlip` braucht dann auch `GithubFlavoredMarkdown` als Service
-
-### 2. Overflow-Verhalten Textseiten
-- `flipbook.less`: `.EP_Musikisum_Flipbook_PageText` → `overflow: hidden` statt `overflow: auto`
-- Begründung: Buchseite hat feste Größe, Überlauf wird geclippt — Nutzer sieht im Preview wann die Seite voll ist und fügt eine neue Seite hinzu (analog zum echten Schreiben)
 
 ## Geplante Erweiterung: Buchdeckel (Cover)
 
