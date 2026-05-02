@@ -55,6 +55,22 @@
     "preview": {
       "en": "Preview",
       "de": "Vorschau"
+    },
+    "showCover": {
+      "en": "Book cover",
+      "de": "Buchdeckel"
+    },
+    "coverTitle": {
+      "en": "Title",
+      "de": "Titel"
+    },
+    "coverSubtitle": {
+      "en": "Subtitle / text",
+      "de": "Untertitel / Text"
+    },
+    "coverEdition": {
+      "en": "Edition",
+      "de": "Ausgabe"
     }
   }
 }

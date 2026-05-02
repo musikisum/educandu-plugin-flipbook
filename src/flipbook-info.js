@@ -41,7 +41,11 @@ class FlipbookInfo {
     return {
       pages: [],
       width: 100,
-      height: 550
+      height: 550,
+      showCover: false,
+      coverTitle: '',
+      coverSubtitle: '',
+      coverEdition: ''
     };
   }
 
@@ -56,10 +60,14 @@ class FlipbookInfo {
     const schema = joi.object({
       pages: joi.array().items(pageSchema).required(),
       width: joi.number().min(0).max(100).required(),
-      height: joi.number().min(100).max(2000).optional()
+      height: joi.number().min(100).max(2000).optional(),
+      showCover: joi.boolean().optional(),
+      coverTitle: joi.string().allow('').optional(),
+      coverSubtitle: joi.string().allow('').optional(),
+      coverEdition: joi.string().allow('').optional()
     });
 
-    joi.attempt(content, schema, { abortEarly: false, convert: false, noDefaults: true });
+    joi.attempt(content, schema, { abortEarly: false, convert: false, noDefaults: true, allowUnknown: true });
   }
 
   cloneContent(content) {

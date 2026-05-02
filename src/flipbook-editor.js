@@ -1,5 +1,5 @@
 import React, { useId, useRef } from 'react';
-import { Button, Form, Select } from 'antd';
+import { Button, Checkbox, Form, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined } from '@ant-design/icons';
 import Info from '@educandu/educandu/components/info.js';
@@ -26,7 +26,7 @@ export default function FlipbookEditor({ content, onContentChanged }) {
   const droppableIdRef = useRef(useId());
   const { t } = useTranslation('musikisum/educandu-plugin-flipbook');
   const pxFormatter = useNumberWithUnitFormat({ unit: 'px', useGrouping: false });
-  const { pages, width, height = 550 } = content;
+  const { pages, width, height = 550, showCover = false, coverTitle = '', coverSubtitle = '', coverEdition = '' } = content;
 
   const updateContent = updates => onContentChanged({ ...content, ...updates });
 
@@ -124,12 +124,47 @@ export default function FlipbookEditor({ content, onContentChanged }) {
             onChange={value => updateContent({ height: value })}
           />
         </Form.Item>
+        <Form.Item label={t('showCover')} {...FORM_ITEM_LAYOUT}>
+          <Checkbox checked={showCover} onChange={e => updateContent({ showCover: e.target.checked })} />
+        </Form.Item>
+        {showCover && (
+          <>
+            <Form.Item label={t('coverTitle')} {...FORM_ITEM_LAYOUT}>
+              <MarkdownInput
+                value={coverTitle}
+                renderAnchors
+                onChange={e => updateContent({ coverTitle: e.target.value })}
+              />
+            </Form.Item>
+            <Form.Item label={t('coverSubtitle')} {...FORM_ITEM_LAYOUT}>
+              <MarkdownInput
+                value={coverSubtitle}
+                renderAnchors
+                onChange={e => updateContent({ coverSubtitle: e.target.value })}
+              />
+            </Form.Item>
+            <Form.Item label={t('coverEdition')} {...FORM_ITEM_LAYOUT}>
+              <MarkdownInput
+                inline
+                value={coverEdition}
+                onChange={e => updateContent({ coverEdition: e.target.value })}
+              />
+            </Form.Item>
+          </>
+        )}
       </Form>
 
       <div className="EP_Musikisum_Flipbook_EditorPreview">
         <div className="EP_Musikisum_Flipbook_EditorPreviewLabel">{t('preview')}</div>
         <div className="EP_Musikisum_Flipbook_EditorPreviewBook">
-          <FlipbookPageFlip pages={pages} height={height} />
+          <FlipbookPageFlip
+            pages={pages}
+            height={height}
+            showCover={showCover}
+            coverTitle={coverTitle}
+            coverSubtitle={coverSubtitle}
+            coverEdition={coverEdition}
+          />
         </div>
       </div>
 

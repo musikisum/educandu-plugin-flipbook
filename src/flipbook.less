@@ -26,6 +26,71 @@
   box-sizing: border-box;
 }
 
+.EP_Musikisum_Flipbook_Cover {
+  background: #2c5f8a !important;
+
+  .EP_Musikisum_Flipbook_CoverContent {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 16px 10%;
+    box-sizing: border-box;
+    text-align: center;
+    color: #a8c8e8;
+  }
+
+  .EP_Musikisum_Flipbook_CoverTitle {
+    font-size: 40px;
+    font-weight: bold;
+    line-height: normal;
+    margin-bottom: 12px;
+    word-wrap: break-word;
+
+    p {
+      margin: 0;
+    }
+
+    * {
+      color: #fff;
+    }
+  }
+
+  .EP_Musikisum_Flipbook_CoverSubtitle {
+    flex: 1;
+    font-size: 28px;
+    line-height: normal;
+    overflow: hidden;
+
+    p {
+      margin: 0 0 4px;
+    }
+
+    * {
+      color: #a8c8e8;
+    }
+  }
+
+  .EP_Musikisum_Flipbook_CoverEdition {
+    margin-top: auto;
+    margin-bottom: 36px;
+    font-size: 24px;
+  }
+
+  .EP_Musikisum_Flipbook_CoverOma {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+
+  &.EP_Musikisum_Flipbook_Cover--front .EP_Musikisum_Flipbook_CoverContent {
+    padding-top: 30%;
+  }
+
+  &.EP_Musikisum_Flipbook_Cover--back .EP_Musikisum_Flipbook_CoverContent {
+    justify-content: flex-end;
+    padding-bottom: 24px;
+  }
+}
+
 .EP_Musikisum_Flipbook_Empty {
   text-align: center;
   color: #999;
