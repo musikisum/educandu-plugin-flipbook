@@ -55,6 +55,8 @@ Jede Seite ist einer von vier Typen:
 - `src/flipbook-display.js` — Display-Komponente
 - `src/flipbook-editor.js` — Editor mit Drag&Drop-Seitenliste, Live-Preview, Audio-Sektion
 - `src/flipbook-page-flip.js` — React-Wrapper um page-flip (imperativer DOM)
+- `src/flipbook-icon.js` — Plugin-Icon (React SVG-Komponente, quadratisches 100×100 viewBox, Farben `#f2f2f2`/`#666` wie educandu Image-Icon)
+- `src/flipbook-icon.svg` — Quell-SVG (Inkscape), wird nicht direkt eingebunden
 - `src/flipbook.less` — Styles, Namespace: `EP_Musikisum_Flipbook_`
 - `src/flipbook.yml` — Übersetzungen EN/DE (→ translations.json, JSON nie manuell bearbeiten)
 - `src/flipbook-info.spec.js` — 21 Vitest-Tests (validateContent, redactContent, getCdnResources)
@@ -80,6 +82,7 @@ Alle Features implementiert und getestet:
 - Live-Preview im Editor ✓
 - Audioplayer (HTML5 + YouTube, Von/Bis, Timecode-Sync, Breiten-Slider, Blättern-Sperre) ✓
 - PDF-Druck ✓
+- Plugin-Icon (FlipbookIcon, React SVG, Farben an educandu Image-Icon angelehnt) ✓
 - 21 Tests, ESLint sauber ✓
 - GitHub Actions Workflows ✓
 
@@ -90,7 +93,8 @@ Der Preview (320px) zeigt Text/ABC-Seiten nicht maßstabsgetreu — CSS-Schriftg
 Erster Lauf nach Cache-Leerung kann mit "Expression expected" (Rollup) fehlschlagen → einfach nochmal `npx vitest run` ausführen.
 
 ## Roadmap
-- **npm publish** — Tag `v1.0.0` gepusht → CI veröffentlicht automatisch auf npm.
+- v1.0.0 auf npm veröffentlicht ✓
+- v1.2.0 — Plugin-Icon hinzugefügt
 
 ## PDF-Druck
 

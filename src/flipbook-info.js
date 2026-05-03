@@ -1,6 +1,6 @@
 import joi from 'joi';
 import React from 'react';
-import { BookOutlined } from '@ant-design/icons';
+import FlipbookIcon from './flipbook-icon.js';
 import cloneDeep from '@educandu/educandu/utils/clone-deep.js';
 import { PLUGIN_GROUP } from '@educandu/educandu/domain/constants.js';
 import { couldAccessUrlFromRoom } from '@educandu/educandu/utils/source-utils.js';
@@ -22,11 +22,11 @@ class FlipbookInfo {
   }
 
   getIcon() {
-    return <BookOutlined />;
+    return <FlipbookIcon />;
   }
 
   getGroups() {
-    return [PLUGIN_GROUP.textImage];
+    return [PLUGIN_GROUP.textImage, PLUGIN_GROUP.audioVideo, PLUGIN_GROUP.interactive];
   }
 
   async resolveDisplayComponent() {
