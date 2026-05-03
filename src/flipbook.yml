@@ -36,8 +36,8 @@ musikisum/educandu-plugin-flipbook:
     en: ABC notation
     de: ABC-Notation
   addPage_abc:
-    en: Add ABC notation page
-    de: ABC-Notationsseite hinzufügen
+    en: Add ABC + text page
+    de: ABC+Text-Seite hinzufügen
   abcCode:
     en: ABC code
     de: ABC-Code
