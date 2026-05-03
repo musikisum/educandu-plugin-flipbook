@@ -303,11 +303,12 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
       pageFlip.on('flip', e => setCurrentPage(e.data));
       pageFlipRef.current = pageFlip;
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('[FlipbookPageFlip] page-flip initialization failed:', err);
       return () => {
         pageFlipRef.current = null;
-        if (printContainerRef.current) {
-          printContainerRef.current.innerHTML = '';
+        if (printContainer) {
+          printContainer.innerHTML = '';
         }
       };
     }
@@ -317,8 +318,8 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
       pageFlipRef.current = null;
       setCurrentPage(0);
       setTotalPages(0);
-      if (printContainerRef.current) {
-        printContainerRef.current.innerHTML = '';
+      if (printContainer) {
+        printContainer.innerHTML = '';
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
