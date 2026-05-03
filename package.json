@@ -1,6 +1,6 @@
 {
   "name": "@musikisum/educandu-plugin-flipbook",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "A native flipbook plugin for educandu",
   "type": "module",
   "exports": {
