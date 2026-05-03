@@ -94,12 +94,12 @@ class FlipbookInfo {
     redactedContent.pages = redactedContent.pages.map(page => ({
       ...page,
       image: page.image && !couldAccessUrlFromRoom(page.image, targetRoomId) ? '' : page.image,
-      text: this.gfm.redactCdnResources(page.text, redact),
+      text: this.gfm.redactCdnResources(page.text || '', redact),
       markdown: page.markdown ? this.gfm.redactCdnResources(page.markdown, redact) : page.markdown
     }));
 
-    redactedContent.coverTitle = this.gfm.redactCdnResources(redactedContent.coverTitle, redact);
-    redactedContent.coverSubtitle = this.gfm.redactCdnResources(redactedContent.coverSubtitle, redact);
+    redactedContent.coverTitle = this.gfm.redactCdnResources(redactedContent.coverTitle || '', redact);
+    redactedContent.coverSubtitle = this.gfm.redactCdnResources(redactedContent.coverSubtitle || '', redact);
     if (redactedContent.audioUrl && !couldAccessUrlFromRoom(redactedContent.audioUrl, targetRoomId)) {
       redactedContent.audioUrl = '';
     }
@@ -114,14 +114,16 @@ class FlipbookInfo {
       if (page.image) {
         resources.push(page.image);
       }
-      resources.push(...this.gfm.extractCdnResources(page.text));
+      if (page.text) {
+        resources.push(...this.gfm.extractCdnResources(page.text));
+      }
       if (page.markdown) {
         resources.push(...this.gfm.extractCdnResources(page.markdown));
       }
     }
 
-    resources.push(...this.gfm.extractCdnResources(content.coverTitle));
-    resources.push(...this.gfm.extractCdnResources(content.coverSubtitle));
+    resources.push(...this.gfm.extractCdnResources(content.coverTitle || ''));
+    resources.push(...this.gfm.extractCdnResources(content.coverSubtitle || ''));
     if (content.audioUrl) {
       resources.push(content.audioUrl);
     }

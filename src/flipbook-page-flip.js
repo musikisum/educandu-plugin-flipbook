@@ -287,20 +287,30 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
 
     setTotalPages(coverCount + paddedPages.length);
 
-    const pageFlip = new PageFlip(bookEl, {
-      width: 400,
-      height: height ?? 550,
-      size: 'stretch',
-      minWidth: 100,
-      maxWidth: 1000,
-      usePortrait: true,
-      showCover: !!showCover,
-      mobileScrollSupport: true,
-    });
-
-    pageFlip.loadFromHTML(bookEl.querySelectorAll('.EP_Musikisum_Flipbook_Page'));
-    pageFlip.on('flip', e => setCurrentPage(e.data));
-    pageFlipRef.current = pageFlip;
+    let pageFlip;
+    try {
+      pageFlip = new PageFlip(bookEl, {
+        width: 400,
+        height: height ?? 550,
+        size: 'stretch',
+        minWidth: 100,
+        maxWidth: 1000,
+        usePortrait: true,
+        showCover: !!showCover,
+        mobileScrollSupport: true,
+      });
+      pageFlip.loadFromHTML(bookEl.querySelectorAll('.EP_Musikisum_Flipbook_Page'));
+      pageFlip.on('flip', e => setCurrentPage(e.data));
+      pageFlipRef.current = pageFlip;
+    } catch (err) {
+      console.error('[FlipbookPageFlip] page-flip initialization failed:', err);
+      return () => {
+        pageFlipRef.current = null;
+        if (printContainerRef.current) {
+          printContainerRef.current.innerHTML = '';
+        }
+      };
+    }
 
     return () => {
       pageFlip.destroy();
