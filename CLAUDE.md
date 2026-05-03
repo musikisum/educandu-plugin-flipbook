@@ -54,7 +54,7 @@ Educandu-Framework-Dateien werden **nie verändert** — nur öffentliche APIs w
 - Bilder (externe URLs + CDN) funktionieren stabil ✓
 - Drag&Drop-Reorder funktioniert, Preview bleibt erhalten ✓
 - Erste Seite erscheint sofort im Preview nach dem Hinzufügen ✓
-- Übersetzungen vollständig (EN/DE): name, noPages, page, image, text, pageType, pageType_*, addPage_*, height, preview, showCover, coverTitle, coverSubtitle, coverEdition ✓
+- Übersetzungen vollständig (EN/DE): name, noPages, page, image, text, pageType, pageType_*, addPage_*, height, preview, showCover, coverTitle, coverSubtitle, coverEdition, abcCode, abcPosition, abcTextInfo ✓
 - Markdown-Rendering für Textseiten implementiert (`gfm.render()` + `renderMedia: true`) ✓
 - Papierton (#f9f6ee) für Textseiten (auf outer page-div per inline style + CSS) ✓
 - Buchsatzspiegel-Padding auf Textseiten: `padding: 8% 10% 13%` ✓
@@ -68,6 +68,15 @@ Educandu-Framework-Dateien werden **nie verändert** — nur öffentliche APIs w
 - page-flip showCover:true für korrektes Aufklappen als Einzelseite ✓
 - Joi-Schema allowUnknown:true für Rückwärtskompatibilität mit altem Content ✓
 - LESS-Watch-Bug behoben: restartServer nach CSS-Recompile (Hash im Dateinamen war Ursache) ✓
+- ABC-Seitentyp implementiert: ABC-Code + Markdown-Text, Notation via `@ABC`-Platzhalter im Text positionierbar ✓
+- ABC-Hintergrundfarbe: `background: #f9f6ee` auf `.EP_Musikisum_Flipbook_PageAbcLayout`, abcjs-SVG per CSS `fill: transparent` ✓
+- ABC-Seiten-Padding: gleicher Buchsatzspiegel wie Textseiten (`8% 10% 13%`) ✓
+
+## Kritisches Detail: abcjs-Hintergrund
+abcjs rendert ein SVG mit einem Rect der Klasse `abcjs-background`. Um die Papierfarbe zu zeigen:
+- `.EP_Musikisum_Flipbook_PageAbcLayout` bekommt `background: #f9f6ee` (deckt die Padding-Ränder ab)
+- `.EP_Musikisum_Flipbook_PageAbcNotation .abcjs-background { fill: transparent }` im LESS macht das SVG-Rect transparent
+- `notationEl.style.background = '#f9f6ee'` als zusätzliche Absicherung auf dem Notation-Container
 
 ## Offene Punkte
 - Text-Seiten und Bild+Text-Seiten noch nicht vollständig getestet
