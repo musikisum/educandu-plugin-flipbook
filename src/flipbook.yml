@@ -83,3 +83,18 @@ musikisum/educandu-plugin-flipbook:
   coverEdition:
     en: Edition
     de: Ausgabe
+  audioUrl:
+    en: Audio file
+    de: Audiodatei
+  audioWidth:
+    en: Player width
+    de: Player-Breite
+  audioPlaybackRange:
+    en: Playback range
+    de: Wiedergabebereich
+  audioTimecodes:
+    en: Timecodes
+    de: Timecodes
+  editTimecodes:
+    en: Edit timecodes
+    de: Timecodes bearbeiten

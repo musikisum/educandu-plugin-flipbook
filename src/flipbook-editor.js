@@ -1,5 +1,5 @@
-import React, { useId, useRef } from 'react';
-import { Button, Checkbox, Form, Select } from 'antd';
+import React, { useId, useRef, useState } from 'react';
+import { Button, Checkbox, Form, Input, Modal, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined } from '@ant-design/icons';
 import Info from '@educandu/educandu/components/info.js';
@@ -15,9 +15,37 @@ import DragAndDropContainer from '@educandu/educandu/components/drag-and-drop-co
 import { swapItemsAt, removeItemAt, moveItem } from '@educandu/educandu/utils/array-utils.js';
 import { useNumberWithUnitFormat } from '@educandu/educandu/components/locale-context.js';
 import FlipbookPageFlip from './flipbook-page-flip.js';
+import MediaRangeSelector from '@educandu/educandu/components/media-player/media-range-selector.js';
 
 const PAGE_TYPES = ['image', 'text', 'image+text', 'abc'];
 const IMAGE_SOURCE_TYPES = [SOURCE_TYPE.mediaLibrary, SOURCE_TYPE.roomMedia, SOURCE_TYPE.external, SOURCE_TYPE.wikimedia];
+const AUDIO_SOURCE_TYPES = [SOURCE_TYPE.mediaLibrary, SOURCE_TYPE.roomMedia, SOURCE_TYPE.external, SOURCE_TYPE.youtube];
+
+function secondsToTimecode(secs) {
+  if (secs === null || typeof secs === 'undefined') {
+    return '';
+  }
+  const m = Math.floor(Number(secs) / 60);
+  const s = Math.floor(Number(secs) % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function timecodeToSeconds(str) {
+  const trimmed = (str || '').trim();
+  if (!trimmed) {
+    return null;
+  }
+  const colonIdx = trimmed.indexOf(':');
+  if (colonIdx !== -1) {
+    const m = parseInt(trimmed.slice(0, colonIdx), 10);
+    const s = parseInt(trimmed.slice(colonIdx + 1), 10);
+    if (!Number.isNaN(m) && !Number.isNaN(s)) {
+      return m * 60 + s;
+    }
+  }
+  const n = parseFloat(trimmed);
+  return Number.isNaN(n) ? null : n;
+}
 
 function createPage(type) {
   const base = { key: crypto.randomUUID(), type, image: '', text: '' };
@@ -35,9 +63,21 @@ export default function FlipbookEditor({ content, onContentChanged }) {
   const { t } = useTranslation('musikisum/educandu-plugin-flipbook');
   const pxFormatter = useNumberWithUnitFormat({ unit: 'px', useGrouping: false });
   const percentFormatter = useNumberWithUnitFormat({ unit: '%', useGrouping: false });
-  const { pages, width, height = 550, showCover = false, coverTitle = '', coverSubtitle = '', coverEdition = '' } = content;
+  const [timecodeModalOpen, setTimecodeModalOpen] = useState(false);
+  const [editingTimecodes, setEditingTimecodes] = useState([]);
+  const { pages, width, height = 550, showCover = false, coverTitle = '', coverSubtitle = '', coverEdition = '', audioUrl = '', audioPlaybackRange = [0, 1], audioWidth = 100, audioTimecodes = [] } = content;
 
   const updateContent = updates => onContentChanged({ ...content, ...updates });
+
+  const handleOpenTimecodeModal = () => {
+    setEditingTimecodes(pages.map((_, i) => secondsToTimecode(audioTimecodes[i])));
+    setTimecodeModalOpen(true);
+  };
+
+  const handleSaveTimecodes = () => {
+    updateContent({ audioTimecodes: editingTimecodes.map(timecodeToSeconds) });
+    setTimecodeModalOpen(false);
+  };
 
   const handlePageChange = (key, changes) => {
     updateContent({ pages: pages.map(p => p.key === key ? { ...p, ...changes } : p) });
@@ -216,7 +256,60 @@ export default function FlipbookEditor({ content, onContentChanged }) {
             </React.Fragment>
           )
           : null}
+        <Form.Item label={t('audioUrl')} {...FORM_ITEM_LAYOUT}>
+          <UrlInput
+            value={audioUrl}
+            allowedSourceTypes={AUDIO_SOURCE_TYPES}
+            onChange={url => updateContent({ audioUrl: url, audioPlaybackRange: [0, 1] })}
+            />
+        </Form.Item>
+        {!!audioUrl && (
+          <Form.Item
+            label={<Info tooltip={t('common:widthInfo')}>{t('audioWidth')}</Info>}
+            {...FORM_ITEM_LAYOUT}
+            >
+            <ObjectWidthSlider value={audioWidth} onChange={value => updateContent({ audioWidth: value })} />
+          </Form.Item>
+        )}
+        {!!audioUrl && (
+          <Form.Item label={t('audioPlaybackRange')} {...FORM_ITEM_LAYOUT}>
+            <MediaRangeSelector
+              sourceUrl={audioUrl}
+              range={audioPlaybackRange}
+              onRangeChange={range => updateContent({ audioPlaybackRange: range })}
+              />
+          </Form.Item>
+        )}
+        {!!(audioUrl && pages.length) && (
+          <Form.Item label={t('audioTimecodes')} {...FORM_ITEM_LAYOUT}>
+            <Button onClick={handleOpenTimecodeModal}>{t('editTimecodes')}</Button>
+          </Form.Item>
+        )}
       </Form>
+
+      <Modal
+        title={t('editTimecodes')}
+        open={timecodeModalOpen}
+        onOk={handleSaveTimecodes}
+        onCancel={() => setTimecodeModalOpen(false)}
+        >
+        <div className="EP_Musikisum_Flipbook_TimecodeModal">
+          {pages.map((page, index) => (
+            <div key={page.key} className="EP_Musikisum_Flipbook_TimecodeRow">
+              <span className="EP_Musikisum_Flipbook_TimecodeLabel">{t('page')} {index + 1}</span>
+              <Input
+                value={editingTimecodes[index] ?? ''}
+                placeholder="0:00"
+                onChange={e => setEditingTimecodes(prev => {
+                  const next = [...prev];
+                  next[index] = e.target.value;
+                  return next;
+                })}
+                />
+            </div>
+          ))}
+        </div>
+      </Modal>
 
       <div className="EP_Musikisum_Flipbook_EditorPreview">
         <div className="EP_Musikisum_Flipbook_EditorPreviewLabel">{t('preview')}</div>

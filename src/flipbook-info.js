@@ -45,7 +45,11 @@ class FlipbookInfo {
       showCover: false,
       coverTitle: '',
       coverSubtitle: '',
-      coverEdition: ''
+      coverEdition: '',
+      audioUrl: '',
+      audioPlaybackRange: [0, 1],
+      audioWidth: 100,
+      audioTimecodes: []
     };
   }
 
@@ -69,7 +73,11 @@ class FlipbookInfo {
       showCover: joi.boolean().optional(),
       coverTitle: joi.string().allow('').optional(),
       coverSubtitle: joi.string().allow('').optional(),
-      coverEdition: joi.string().allow('').optional()
+      coverEdition: joi.string().allow('').optional(),
+      audioUrl: joi.string().allow('').optional(),
+      audioPlaybackRange: joi.array().items(joi.number()).length(2).optional(),
+      audioWidth: joi.number().min(0).max(100).optional(),
+      audioTimecodes: joi.array().items(joi.number().allow(null)).optional()
     });
 
     joi.attempt(content, schema, { abortEarly: false, convert: false, noDefaults: true, allowUnknown: true });
@@ -92,6 +100,9 @@ class FlipbookInfo {
 
     redactedContent.coverTitle = this.gfm.redactCdnResources(redactedContent.coverTitle, redact);
     redactedContent.coverSubtitle = this.gfm.redactCdnResources(redactedContent.coverSubtitle, redact);
+    if (redactedContent.audioUrl && !couldAccessUrlFromRoom(redactedContent.audioUrl, targetRoomId)) {
+      redactedContent.audioUrl = '';
+    }
 
     return redactedContent;
   }
@@ -111,6 +122,9 @@ class FlipbookInfo {
 
     resources.push(...this.gfm.extractCdnResources(content.coverTitle));
     resources.push(...this.gfm.extractCdnResources(content.coverSubtitle));
+    if (content.audioUrl) {
+      resources.push(content.audioUrl);
+    }
 
     return [...new Set(resources)].filter(Boolean);
   }

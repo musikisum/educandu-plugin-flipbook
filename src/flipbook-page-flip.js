@@ -1,11 +1,13 @@
 import abcjs from 'abcjs';
 import PropTypes from 'prop-types';
 import PageFlipModule from 'page-flip';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ClientConfig from '@educandu/educandu/bootstrap/client-config.js';
+import { MEDIA_SCREEN_MODE } from '@educandu/educandu/domain/constants.js';
 import { useService } from '@educandu/educandu/components/container-context.js';
 import { getAccessibleUrl } from '@educandu/educandu/utils/source-utils.js';
 import GithubFlavoredMarkdown from '@educandu/educandu/common/github-flavored-markdown.js';
+import MediaPlayer from '@educandu/educandu/components/media-player/media-player.js';
 
 const ABC_OPTIONS = { paddingtop: 0, paddingbottom: 10, paddingright: 0, paddingleft: 0, responsive: 'resize' };
 
@@ -17,11 +19,13 @@ function createPadPage(index) {
   return { key: `__pad_${index}`, type: 'image', image: '', text: '' };
 }
 
-export default function FlipbookPageFlip({ pages, height, showCover, coverTitle, coverSubtitle, coverEdition }) {
+export default function FlipbookPageFlip({ pages, height, showCover, coverTitle, coverSubtitle, coverEdition, audioUrl, audioPlaybackRange, audioWidth, audioTimecodes }) {
   const containerRef = useRef(null);
   const pageFlipRef = useRef(null);
+  const currentPageRef = useRef(0);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const clientConfig = useService(ClientConfig);
   const gfm = useService(GithubFlavoredMarkdown);
 
@@ -32,6 +36,29 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
     coverSubtitle,
     coverEdition
   ].join('||');
+
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
+
+  const handleProgress = useCallback(progressMs => {
+    if (!audioTimecodes?.length) {
+      return;
+    }
+    const progressSecs = progressMs / 1000;
+    const coverOffset = showCover ? 2 : 0;
+    let targetContentPage = 0;
+    for (let i = 0; i < audioTimecodes.length; i += 1) {
+      if (audioTimecodes[i] !== null && progressSecs >= audioTimecodes[i]) {
+        targetContentPage = i;
+      }
+    }
+    const targetFlipPage = targetContentPage + coverOffset;
+    if (targetFlipPage !== currentPageRef.current) {
+      currentPageRef.current = targetFlipPage;
+      pageFlipRef.current?.flip(targetFlipPage);
+    }
+  }, [audioTimecodes, showCover]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -261,13 +288,16 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
 
   return (
     <div className="EP_Musikisum_Flipbook_Container">
-      <div ref={containerRef} className="EP_Musikisum_Flipbook_Book" />
+      <div className="EP_Musikisum_Flipbook_BookArea">
+        <div ref={containerRef} className="EP_Musikisum_Flipbook_Book" />
+        {!!isPlaying && <div className="EP_Musikisum_Flipbook_PlayingOverlay" />}
+      </div>
       {!!(pages.length || showCover) && (
         <div className="EP_Musikisum_Flipbook_Controls">
           <button
             type="button"
             className="EP_Musikisum_Flipbook_NavBtn"
-            disabled={currentPage === 0}
+            disabled={currentPage === 0 || isPlaying}
             onClick={() => pageFlipRef.current?.flipPrev()}
             >
             ‹
@@ -278,11 +308,26 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
           <button
             type="button"
             className="EP_Musikisum_Flipbook_NavBtn"
-            disabled={currentPage >= totalPages - 1}
+            disabled={currentPage >= totalPages - 1 || isPlaying}
             onClick={() => pageFlipRef.current?.flipNext()}
             >
             ›
           </button>
+        </div>
+      )}
+      {!!audioUrl && (
+        <div className="EP_Musikisum_Flipbook_Audio" style={{ width: `${audioWidth}%` }}>
+          <MediaPlayer
+            sourceUrl={getAccessibleUrl({ url: audioUrl, cdnRootUrl: clientConfig.cdnRootUrl })}
+            playbackRange={audioPlaybackRange}
+            screenMode={MEDIA_SCREEN_MODE.none}
+            onProgress={handleProgress}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onEnded={() => setIsPlaying(false)}
+            allowLoop
+            allowPlaybackRate
+            />
         </div>
       )}
     </div>
@@ -294,7 +339,11 @@ FlipbookPageFlip.defaultProps = {
   showCover: false,
   coverTitle: '',
   coverSubtitle: '',
-  coverEdition: ''
+  coverEdition: '',
+  audioUrl: '',
+  audioPlaybackRange: [0, 1],
+  audioWidth: 100,
+  audioTimecodes: []
 };
 
 FlipbookPageFlip.propTypes = {
@@ -303,6 +352,10 @@ FlipbookPageFlip.propTypes = {
   coverTitle: PropTypes.string,
   coverSubtitle: PropTypes.string,
   coverEdition: PropTypes.string,
+  audioUrl: PropTypes.string,
+  audioPlaybackRange: PropTypes.arrayOf(PropTypes.number),
+  audioWidth: PropTypes.number,
+  audioTimecodes: PropTypes.arrayOf(PropTypes.number),
   pages: PropTypes.arrayOf(PropTypes.shape({
     key: PropTypes.string.isRequired,
     type: PropTypes.oneOf(['image', 'text', 'image+text', 'abc']).isRequired,

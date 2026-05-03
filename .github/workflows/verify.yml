@@ -8,17 +8,6 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       NODE_ENV: development
-    services:
-      mongo:
-        image: educandu/mongo:8.0.0
-        ports:
-          - 27017:27017
-        env:
-          MONGODB_ROOT_USER: root
-          MONGODB_ROOT_PASSWORD: rootpw
-          MONGODB_REPLICA_SET_KEY: educandurs
-          MONGODB_REPLICA_SET_NAME: educandurs
-          MONGODB_REPLICA_SET_MODE: primary
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.2.1
@@ -37,9 +26,3 @@ jobs:
         run: ./node_modules/.bin/gulp test
       - name: Build
         run: ./node_modules/.bin/gulp build
-      - name: Codecov
-        uses: codecov/codecov-action@v4.6.0
-        with:
-          files: ./coverage/coverage-final.json
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
