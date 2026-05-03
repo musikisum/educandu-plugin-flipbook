@@ -79,6 +79,7 @@ Alle Features implementiert und getestet:
 - Drag&Drop-Reorder ✓
 - Live-Preview im Editor ✓
 - Audioplayer (HTML5 + YouTube, Von/Bis, Timecode-Sync, Breiten-Slider, Blättern-Sperre) ✓
+- PDF-Druck ✓
 - 21 Tests, ESLint sauber ✓
 - GitHub Actions Workflows ✓
 
@@ -91,14 +92,20 @@ Erster Lauf nach Cache-Leerung kann mit "Expression expected" (Rollup) fehlschla
 ## Roadmap
 - **npm publish** — Tag `v1.0.0` gepusht → CI veröffentlicht automatisch auf npm.
 
-## Nächste Implementierung: PDF-Druck
+## PDF-Druck
 
-Button „Drucken / Als PDF speichern" ruft `window.print()` auf — Browser öffnet nativen Druckdialog.
+Button „Drucken / Als PDF speichern" neben den Navigationsbuttons ruft `window.print()` auf.
 
-**Technischer Plan:**
-- Page-flip rendert Seiten mit absoluter Positionierung + CSS-Transforms — `@media print` kann das nicht direkt überschreiben
-- Lösung: Nach dem Aufbau des Flipbooks im `useEffect` alle `.EP_Musikisum_Flipbook_Page`-Elemente in einen versteckten `EP_Musikisum_Flipbook_PrintView`-Container **klonen**
-- `@media print`: nur PrintView sichtbar, alles andere `display: none`; Seiten als gestapelte Divs mit `page-break-after: always`
-- Vorteil: Inhalte (Bilder, ABC-Notation, Markdown) sind bereits fertig gerendertes DOM — kein Neu-Rendern nötig
-- Button sitzt unterhalb des Buches (neben den Controls oder separat)
-- Übersetzungsschlüssel: `printButton` (EN: "Print / Save as PDF", DE: "Drucken / Als PDF speichern")
+**Implementierung:**
+- Seiten werden im `useEffect` **nach** `abcjs.renderAbc()` aber **vor** `new PageFlip()` geklont — zu diesem Zeitpunkt ist der Inhalt fertig gerendert, page-flip hat noch keine Transforms angewendet
+- Klone landen in `EP_Musikisum_Flipbook_PrintView` (normaler div, `display: none` im Screen-Modus)
+- Beim Klick: Klasse `EP_Musikisum_Flipbook_IsPrinting` auf den eigenen Container-Div setzen → nach Druck via `afterprint`-Event wieder entfernen. Damit druckt bei mehreren Flipbooks auf einer Seite nur das angeklickte.
+- `@page { margin: 0 }` unterdrückt Browser-Metadaten (URL, Datum, Seitenzahl) in Chrome
+- `@media print`: `body { visibility: hidden }` + nur `IsPrinting`-Container sichtbar schalten; `EP_Musikisum_Flipbook_Display { overflow: visible }` verhindert Clipping
+
+**Kritische CSS-Details:**
+- `break-inside: avoid` + `break-after: page` auf jeder Druckseite — kein Umbrechen mitten in einer Seite
+- `padding: 20mm 10mm` auf der Druckseite (statt `@page`-Margin) → Rand ohne Browser-Metadaten
+- `CoverContent/PageText/PageAbcLayout/PageImageText`: `padding: 0` im Druck (das Seiten-Padding übernimmt)
+- `padding-top: 30%` auf dem Cover-CoverContent ist für schmale Flipbook-Seiten (~400px) berechnet — im Druck wäre das ~240px. Wird durch `padding: 0 !important` neutralisiert (Seiten-Padding greift)
+- Reine Bildseiten: `img` ist direktes Kind des Page-Div → `.EP_Musikisum_Flipbook_Page > img { max-height: calc(100vh - 40mm) }` begrenzt auf Seitenhöhe. `> img` (direktes Kind) schließt Bilder in Image+Text-Seiten aus — deren Inline-Styles (Breite, Float) bleiben unberührt

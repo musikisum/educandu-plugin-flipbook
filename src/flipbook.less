@@ -280,3 +280,96 @@
   min-width: 64px;
   color: #555;
 }
+
+.EP_Musikisum_Flipbook_PrintBtn {
+  margin-left: 16px;
+  background: none;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 10px;
+
+  &:hover {
+    border-color: #1677ff;
+    color: #1677ff;
+  }
+}
+
+.EP_Musikisum_Flipbook_PrintView {
+  display: none;
+}
+
+@page {
+  margin: 0;
+}
+
+@media print {
+  body {
+    visibility: hidden;
+  }
+
+  .EP_Musikisum_Flipbook_Display {
+    overflow: visible !important;
+  }
+
+  .EP_Musikisum_Flipbook_IsPrinting {
+    visibility: visible !important;
+    overflow: visible !important;
+    height: auto !important;
+    position: static !important;
+
+    .EP_Musikisum_Flipbook_BookArea,
+    .EP_Musikisum_Flipbook_Controls,
+    .EP_Musikisum_Flipbook_Audio {
+      display: none !important;
+    }
+
+    .EP_Musikisum_Flipbook_PrintView {
+      display: block !important;
+      visibility: visible !important;
+      position: static !important;
+      width: 100%;
+
+      * {
+        visibility: visible !important;
+      }
+
+      .EP_Musikisum_Flipbook_Page {
+        display: block !important;
+        position: static !important;
+        transform: none !important;
+        width: 100% !important;
+        height: auto !important;
+        padding: 20mm 10mm !important;
+        overflow: visible !important;
+        page-break-after: always;
+        break-after: page;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        box-sizing: border-box;
+
+        &::before {
+          display: none;
+        }
+      }
+
+      .EP_Musikisum_Flipbook_CoverContent,
+      .EP_Musikisum_Flipbook_PageText,
+      .EP_Musikisum_Flipbook_PageAbcLayout,
+      .EP_Musikisum_Flipbook_PageImageText {
+        height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+      }
+
+      .EP_Musikisum_Flipbook_Page > img {
+        max-height: calc(100vh - 40mm);
+        width: auto !important;
+        max-width: 100%;
+        display: block;
+        margin: 0 auto;
+      }
+    }
+  }
+}

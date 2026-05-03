@@ -2,6 +2,7 @@ import abcjs from 'abcjs';
 import PropTypes from 'prop-types';
 import PageFlipModule from 'page-flip';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ClientConfig from '@educandu/educandu/bootstrap/client-config.js';
 import { MEDIA_SCREEN_MODE } from '@educandu/educandu/domain/constants.js';
 import { useService } from '@educandu/educandu/components/container-context.js';
@@ -20,7 +21,9 @@ function createPadPage(index) {
 }
 
 export default function FlipbookPageFlip({ pages, height, showCover, coverTitle, coverSubtitle, coverEdition, audioUrl, audioPlaybackRange, audioWidth, audioTimecodes }) {
+  const wrapperRef = useRef(null);
   const containerRef = useRef(null);
+  const printContainerRef = useRef(null);
   const pageFlipRef = useRef(null);
   const currentPageRef = useRef(0);
   const [currentPage, setCurrentPage] = useState(0);
@@ -28,6 +31,20 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
   const [isPlaying, setIsPlaying] = useState(false);
   const clientConfig = useService(ClientConfig);
   const gfm = useService(GithubFlavoredMarkdown);
+  const { t } = useTranslation('musikisum/educandu-plugin-flipbook');
+
+  const handlePrint = useCallback(() => {
+    const wrapper = wrapperRef.current;
+    if (wrapper) {
+      wrapper.classList.add('EP_Musikisum_Flipbook_IsPrinting');
+      const cleanup = () => {
+        wrapper.classList.remove('EP_Musikisum_Flipbook_IsPrinting');
+        window.removeEventListener('afterprint', cleanup);
+      };
+      window.addEventListener('afterprint', cleanup);
+    }
+    window.print();
+  }, []);
 
   const pagesKey = [
     pages.map(p => `${p.key}:${p.type}:${p.image}:${p.text}:${p.markdown ?? ''}:${p.imagePosition ?? ''}:${p.imageSize ?? ''}`).join('|'),
@@ -260,6 +277,14 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
 
     abcRenderQueue.forEach(({ el, code }) => abcjs.renderAbc(el, code, ABC_OPTIONS));
 
+    const printContainer = printContainerRef.current;
+    if (printContainer) {
+      printContainer.innerHTML = '';
+      bookEl.querySelectorAll('.EP_Musikisum_Flipbook_Page').forEach(pageEl => {
+        printContainer.appendChild(pageEl.cloneNode(true));
+      });
+    }
+
     setTotalPages(coverCount + paddedPages.length);
 
     const pageFlip = new PageFlip(bookEl, {
@@ -282,12 +307,15 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
       pageFlipRef.current = null;
       setCurrentPage(0);
       setTotalPages(0);
+      if (printContainerRef.current) {
+        printContainerRef.current.innerHTML = '';
+      }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagesKey, height, clientConfig, gfm]);
 
   return (
-    <div className="EP_Musikisum_Flipbook_Container">
+    <div ref={wrapperRef} className="EP_Musikisum_Flipbook_Container">
       <div className="EP_Musikisum_Flipbook_BookArea">
         <div ref={containerRef} className="EP_Musikisum_Flipbook_Book" />
         {!!isPlaying && <div className="EP_Musikisum_Flipbook_PlayingOverlay" />}
@@ -313,8 +341,16 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
             >
             ›
           </button>
+          <button
+            type="button"
+            className="EP_Musikisum_Flipbook_PrintBtn"
+            onClick={handlePrint}
+            >
+            {t('printButton')}
+          </button>
         </div>
       )}
+      <div ref={printContainerRef} className="EP_Musikisum_Flipbook_PrintView" />
       {!!audioUrl && (
         <div className="EP_Musikisum_Flipbook_Audio" style={{ width: `${audioWidth}%` }}>
           <MediaPlayer

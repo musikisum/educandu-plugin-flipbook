@@ -131,6 +131,10 @@
     "editTimecodes": {
       "en": "Edit timecodes",
       "de": "Timecodes bearbeiten"
+    },
+    "printButton": {
+      "en": "Print / Save as PDF",
+      "de": "Drucken / Als PDF speichern"
     }
   }
 }
