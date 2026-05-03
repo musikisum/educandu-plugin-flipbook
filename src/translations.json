@@ -60,6 +60,30 @@
       "en": "Use @ABC in the text to position the notation. Without @ABC, the notation appears at the top.",
       "de": "Mit @ABC im Text wird die Notation an dieser Stelle platziert. Ohne @ABC erscheint sie oben."
     },
+    "imagePosition": {
+      "en": "Image position",
+      "de": "Bildposition"
+    },
+    "imagePosition_none": {
+      "en": "Column",
+      "de": "Ohne Umfluss"
+    },
+    "imagePosition_left": {
+      "en": "Left (text wrap)",
+      "de": "Links (Textumfluss)"
+    },
+    "imagePosition_right": {
+      "en": "Right (text wrap)",
+      "de": "Rechts (Textumfluss)"
+    },
+    "imageSize": {
+      "en": "Image size",
+      "de": "Bildgröße"
+    },
+    "imageTextInfo": {
+      "en": "Use @IMG in the text to position the image. Without @IMG, the image appears at the top.",
+      "de": "Mit @IMG im Text wird das Bild an dieser Stelle platziert. Ohne @IMG erscheint es oben."
+    },
     "pageType": {
       "en": "Page type",
       "de": "Seitentyp"

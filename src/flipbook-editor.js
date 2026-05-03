@@ -24,6 +24,9 @@ function createPage(type) {
   if (type === 'abc') {
     return { ...base, markdown: '' };
   }
+  if (type === 'image+text') {
+    return { ...base, imagePosition: 'none', imageSize: 100 };
+  }
   return base;
 }
 
@@ -31,6 +34,7 @@ export default function FlipbookEditor({ content, onContentChanged }) {
   const droppableIdRef = useRef(useId());
   const { t } = useTranslation('musikisum/educandu-plugin-flipbook');
   const pxFormatter = useNumberWithUnitFormat({ unit: 'px', useGrouping: false });
+  const percentFormatter = useNumberWithUnitFormat({ unit: '%', useGrouping: false });
   const { pages, width, height = 550, showCover = false, coverTitle = '', coverSubtitle = '', coverEdition = '' } = content;
 
   const updateContent = updates => onContentChanged({ ...content, ...updates });
@@ -71,13 +75,13 @@ export default function FlipbookEditor({ content, onContentChanged }) {
       onMoveUp={handleMoveUp}
       onMoveDown={handleMoveDown}
       onDelete={handleDeletePage}
-    >
+      >
       <Form.Item label={t('pageType')} {...FORM_ITEM_LAYOUT}>
         <Select
           value={page.type}
           options={PAGE_TYPES.map(pt => ({ value: pt, label: t(`pageType_${pt}`) }))}
           onChange={type => handlePageChange(page.key, { type })}
-        />
+          />
       </Form.Item>
 
       {(page.type === 'image' || page.type === 'image+text') && (
@@ -86,37 +90,71 @@ export default function FlipbookEditor({ content, onContentChanged }) {
             value={page.image}
             allowedSourceTypes={IMAGE_SOURCE_TYPES}
             onChange={url => handlePageChange(page.key, { image: url })}
-          />
+            />
         </Form.Item>
       )}
 
-      {(page.type === 'text' || page.type === 'image+text') && (
+      {page.type === 'image+text' && (
+        <React.Fragment>
+          <Form.Item label={t('imagePosition')} {...FORM_ITEM_LAYOUT}>
+            <Select
+              value={page.imagePosition ?? 'none'}
+              options={['none', 'left', 'right'].map(pos => ({ value: pos, label: t(`imagePosition_${pos}`) }))}
+              onChange={imagePosition => handlePageChange(page.key, { imagePosition })}
+              />
+          </Form.Item>
+          <Form.Item label={t('imageSize')} {...FORM_ITEM_LAYOUT}>
+            <StepSlider
+              min={10}
+              step={5}
+              max={100}
+              marksStep={10}
+              labelsStep={20}
+              value={page.imageSize ?? 40}
+              formatter={percentFormatter}
+              onChange={value => handlePageChange(page.key, { imageSize: value })}
+              />
+          </Form.Item>
+        </React.Fragment>
+      )}
+
+      {page.type === 'text' && (
         <Form.Item label={t('text')} {...FORM_ITEM_LAYOUT}>
           <MarkdownInput
             value={page.text}
             renderAnchors
             onChange={e => handlePageChange(page.key, { text: e.target.value })}
-          />
+            />
+        </Form.Item>
+      )}
+
+      {page.type === 'image+text' && (
+        <Form.Item label={<Info tooltip={t('imageTextInfo')}>{t('text')}</Info>} {...FORM_ITEM_LAYOUT}>
+          <MarkdownInput
+            value={page.text}
+            renderAnchors
+            onChange={e => handlePageChange(page.key, { text: e.target.value })}
+            />
         </Form.Item>
       )}
 
       {page.type === 'abc' && (
-        <>
+        <React.Fragment>
           <Form.Item label={t('abcCode')} {...FORM_ITEM_LAYOUT}>
             <AbcInput
               value={page.text}
               debounced
               onChange={e => handlePageChange(page.key, { text: e.target.value })}
-            />
+              />
           </Form.Item>
           <Form.Item label={<Info tooltip={t('abcTextInfo')}>{t('text')}</Info>} {...FORM_ITEM_LAYOUT}>
             <MarkdownInput
               value={page.markdown ?? ''}
               renderAnchors
               onChange={e => handlePageChange(page.key, { markdown: e.target.value })}
-            />
+              />
           </Form.Item>
-        </>
+        </React.Fragment>
       )}
     </ItemPanel>
   );
@@ -133,7 +171,7 @@ export default function FlipbookEditor({ content, onContentChanged }) {
         <Form.Item
           label={<Info tooltip={t('common:widthInfo')}>{t('common:width')}</Info>}
           {...FORM_ITEM_LAYOUT}
-        >
+          >
           <ObjectWidthSlider value={width} onChange={value => updateContent({ width: value })} />
         </Form.Item>
         <Form.Item label={t('height')} {...FORM_ITEM_LAYOUT}>
@@ -146,36 +184,38 @@ export default function FlipbookEditor({ content, onContentChanged }) {
             value={height}
             formatter={pxFormatter}
             onChange={value => updateContent({ height: value })}
-          />
+            />
         </Form.Item>
         <Form.Item label={t('showCover')} {...FORM_ITEM_LAYOUT}>
           <Checkbox checked={showCover} onChange={e => updateContent({ showCover: e.target.checked })} />
         </Form.Item>
-        {showCover && (
-          <>
-            <Form.Item label={t('coverTitle')} {...FORM_ITEM_LAYOUT}>
-              <MarkdownInput
-                value={coverTitle}
-                renderAnchors
-                onChange={e => updateContent({ coverTitle: e.target.value })}
-              />
-            </Form.Item>
-            <Form.Item label={t('coverSubtitle')} {...FORM_ITEM_LAYOUT}>
-              <MarkdownInput
-                value={coverSubtitle}
-                renderAnchors
-                onChange={e => updateContent({ coverSubtitle: e.target.value })}
-              />
-            </Form.Item>
-            <Form.Item label={t('coverEdition')} {...FORM_ITEM_LAYOUT}>
-              <MarkdownInput
-                inline
-                value={coverEdition}
-                onChange={e => updateContent({ coverEdition: e.target.value })}
-              />
-            </Form.Item>
-          </>
-        )}
+        {showCover
+          ? (
+            <React.Fragment>
+              <Form.Item label={t('coverTitle')} {...FORM_ITEM_LAYOUT}>
+                <MarkdownInput
+                  value={coverTitle}
+                  renderAnchors
+                  onChange={e => updateContent({ coverTitle: e.target.value })}
+                  />
+              </Form.Item>
+              <Form.Item label={t('coverSubtitle')} {...FORM_ITEM_LAYOUT}>
+                <MarkdownInput
+                  value={coverSubtitle}
+                  renderAnchors
+                  onChange={e => updateContent({ coverSubtitle: e.target.value })}
+                  />
+              </Form.Item>
+              <Form.Item label={t('coverEdition')} {...FORM_ITEM_LAYOUT}>
+                <MarkdownInput
+                  inline
+                  value={coverEdition}
+                  onChange={e => updateContent({ coverEdition: e.target.value })}
+                  />
+              </Form.Item>
+            </React.Fragment>
+          )
+          : null}
       </Form>
 
       <div className="EP_Musikisum_Flipbook_EditorPreview">
@@ -188,7 +228,7 @@ export default function FlipbookEditor({ content, onContentChanged }) {
             coverTitle={coverTitle}
             coverSubtitle={coverSubtitle}
             coverEdition={coverEdition}
-          />
+            />
         </div>
       </div>
 

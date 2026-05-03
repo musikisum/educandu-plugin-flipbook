@@ -51,6 +51,30 @@
   box-sizing: border-box;
 }
 
+.EP_Musikisum_Flipbook_PageImageText {
+  padding: 8% 10% 13%;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: #f9f6ee;
+
+  &--column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &--column .EP_Musikisum_Flipbook_PageImageTextContent {
+    overflow: hidden;
+  }
+
+  .EP_Musikisum_Flipbook_PageImageTextContent {
+    p {
+      margin: 0 0 4px;
+    }
+  }
+}
+
 .EP_Musikisum_Flipbook_Cover {
   background: #2c5f8a !important;
 

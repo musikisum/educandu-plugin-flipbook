@@ -10,7 +10,7 @@ export default function FlipbookDisplay({ content }) {
   return (
     <div className="EP_Musikisum_Flipbook_Display">
       <div className={`u-horizontally-centered u-width-${width}`}>
-        {(pages.length || showCover)
+        {pages.length || showCover
           ? <FlipbookPageFlip
               pages={pages}
               height={height}
@@ -18,7 +18,7 @@ export default function FlipbookDisplay({ content }) {
               coverTitle={coverTitle}
               coverSubtitle={coverSubtitle}
               coverEdition={coverEdition}
-            />
+              />
           : <p className="EP_Musikisum_Flipbook_Empty">{t('noPages')}</p>}
       </div>
     </div>

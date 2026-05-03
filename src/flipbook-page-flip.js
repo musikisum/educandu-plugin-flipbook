@@ -26,7 +26,7 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
   const gfm = useService(GithubFlavoredMarkdown);
 
   const pagesKey = [
-    pages.map(p => `${p.key}:${p.type}:${p.image}:${p.text}:${p.markdown ?? ''}`).join('|'),
+    pages.map(p => `${p.key}:${p.type}:${p.image}:${p.text}:${p.markdown ?? ''}:${p.imagePosition ?? ''}:${p.imageSize ?? ''}`).join('|'),
     String(showCover),
     coverTitle,
     coverSubtitle,
@@ -36,7 +36,7 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
   useEffect(() => {
     const container = containerRef.current;
     if (!container) {
-      return;
+      return () => {};
     }
 
     const coverCount = showCover ? 2 : 0;
@@ -112,18 +112,82 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
         el.style.background = '#f9f6ee';
       }
 
-      if ((page.type === 'image' || page.type === 'image+text') && page.image) {
+      if (page.type === 'image' && page.image) {
         const img = document.createElement('img');
         img.src = getAccessibleUrl({ url: page.image, cdnRootUrl: clientConfig.cdnRootUrl });
         img.alt = '';
         el.appendChild(img);
       }
 
-      if ((page.type === 'text' || page.type === 'image+text') && page.text) {
+      if (page.type === 'text' && page.text) {
         const textEl = document.createElement('div');
         textEl.className = 'EP_Musikisum_Flipbook_PageText Markdown';
         textEl.innerHTML = gfm.render(page.text, { cdnRootUrl: clientConfig.cdnRootUrl, renderMedia: true });
         el.appendChild(textEl);
+      }
+
+      if (page.type === 'image+text') {
+        const imagePosition = page.imagePosition ?? 'none';
+        const imageSize = page.imageSize ?? 100;
+        const isFloat = imagePosition === 'left' || imagePosition === 'right';
+
+        const layoutEl = document.createElement('div');
+        layoutEl.className = `EP_Musikisum_Flipbook_PageImageText${  isFloat ? '' : ' EP_Musikisum_Flipbook_PageImageText--column'}`;
+
+        const makeImg = () => {
+          if (!page.image) {return null;}
+          const img = document.createElement('img');
+          img.src = getAccessibleUrl({ url: page.image, cdnRootUrl: clientConfig.cdnRootUrl });
+          img.alt = '';
+          img.style.width = `${imageSize}%`;
+          if (isFloat) {
+            img.style.float = imagePosition;
+            img.style.marginRight = imagePosition === 'left' ? '20px' : '0';
+            img.style.marginLeft = imagePosition === 'right' ? '20px' : '0';
+            img.style.marginBottom = '16px';
+          } else {
+            img.style.display = 'block';
+            img.style.margin = '0 auto';
+          }
+          return img;
+        };
+
+        const appendText = text => {
+          if (text.trim()) {
+            if (isFloat) {
+              const temp = document.createElement('div');
+              temp.innerHTML = gfm.render(text, { cdnRootUrl: clientConfig.cdnRootUrl, renderMedia: true });
+              while (temp.firstChild) {layoutEl.appendChild(temp.firstChild);}
+            } else {
+              const textEl = document.createElement('div');
+              textEl.className = 'EP_Musikisum_Flipbook_PageImageTextContent Markdown';
+              textEl.innerHTML = gfm.render(text, { cdnRootUrl: clientConfig.cdnRootUrl, renderMedia: true });
+              layoutEl.appendChild(textEl);
+            }
+          }
+        };
+
+        const markdownText = page.text ?? '';
+        const parts = markdownText.split('@IMG');
+
+        if (parts.length > 1) {
+          appendText(parts[0]);
+          const img = makeImg();
+          if (img) {layoutEl.appendChild(img);}
+          appendText(parts[1]);
+        } else {
+          const img = makeImg();
+          if (img) {layoutEl.appendChild(img);}
+          appendText(markdownText);
+        }
+
+        if (isFloat) {
+          const clearEl = document.createElement('div');
+          clearEl.style.clear = 'both';
+          layoutEl.appendChild(clearEl);
+        }
+
+        el.appendChild(layoutEl);
       }
 
       if (page.type === 'abc') {
@@ -145,12 +209,12 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
         };
 
         if (parts.length > 1) {
-          if (parts[0].trim()) layoutEl.appendChild(makeTextEl(parts[0]));
+          if (parts[0].trim()) {layoutEl.appendChild(makeTextEl(parts[0]));}
           layoutEl.appendChild(notationEl);
-          if (parts[1].trim()) layoutEl.appendChild(makeTextEl(parts[1]));
+          if (parts[1].trim()) {layoutEl.appendChild(makeTextEl(parts[1]));}
         } else {
           layoutEl.appendChild(notationEl);
-          if (markdownText.trim()) layoutEl.appendChild(makeTextEl(markdownText));
+          if (markdownText.trim()) {layoutEl.appendChild(makeTextEl(markdownText));}
         }
 
         el.appendChild(layoutEl);
@@ -201,6 +265,7 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
       {!!(pages.length || showCover) && (
         <div className="EP_Musikisum_Flipbook_Controls">
           <button
+            type="button"
             className="EP_Musikisum_Flipbook_NavBtn"
             disabled={currentPage === 0}
             onClick={() => pageFlipRef.current?.flipPrev()}
@@ -211,6 +276,7 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
             {currentPage + 1} / {totalPages}
           </span>
           <button
+            type="button"
             className="EP_Musikisum_Flipbook_NavBtn"
             disabled={currentPage >= totalPages - 1}
             onClick={() => pageFlipRef.current?.flipNext()}
@@ -222,6 +288,14 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
     </div>
   );
 }
+
+FlipbookPageFlip.defaultProps = {
+  height: 550,
+  showCover: false,
+  coverTitle: '',
+  coverSubtitle: '',
+  coverEdition: ''
+};
 
 FlipbookPageFlip.propTypes = {
   height: PropTypes.number,
