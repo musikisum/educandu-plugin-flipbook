@@ -52,9 +52,12 @@ class FlipbookInfo {
   validateContent(content) {
     const pageSchema = joi.object({
       key: joi.string().required(),
-      type: joi.string().valid('image', 'text', 'image+text').required(),
+      type: joi.string().valid('image', 'text', 'image+text', 'abc').required(),
       image: joi.string().allow('').optional(),
-      text: joi.string().allow('').optional()
+      text: joi.string().allow('').optional(),
+      markdown: joi.string().allow('').optional(),
+      abcSize: joi.number().optional(),
+      abcPosition: joi.string().optional()
     });
 
     const schema = joi.object({
@@ -81,7 +84,8 @@ class FlipbookInfo {
     redactedContent.pages = redactedContent.pages.map(page => ({
       ...page,
       image: page.image && !couldAccessUrlFromRoom(page.image, targetRoomId) ? '' : page.image,
-      text: this.gfm.redactCdnResources(page.text, redact)
+      text: this.gfm.redactCdnResources(page.text, redact),
+      markdown: page.markdown ? this.gfm.redactCdnResources(page.markdown, redact) : page.markdown
     }));
 
     redactedContent.coverTitle = this.gfm.redactCdnResources(redactedContent.coverTitle, redact);
@@ -98,6 +102,9 @@ class FlipbookInfo {
         resources.push(page.image);
       }
       resources.push(...this.gfm.extractCdnResources(page.text));
+      if (page.markdown) {
+        resources.push(...this.gfm.extractCdnResources(page.markdown));
+      }
     }
 
     resources.push(...this.gfm.extractCdnResources(content.coverTitle));

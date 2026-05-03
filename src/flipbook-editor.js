@@ -7,6 +7,7 @@ import UrlInput from '@educandu/educandu/components/url-input.js';
 import ItemPanel from '@educandu/educandu/components/item-panel.js';
 import StepSlider from '@educandu/educandu/components/step-slider.js';
 import { FORM_ITEM_LAYOUT, SOURCE_TYPE } from '@educandu/educandu/domain/constants.js';
+import AbcInput from '@educandu/educandu/components/abc-input.js';
 import MarkdownInput from '@educandu/educandu/components/markdown-input.js';
 import { sectionEditorProps } from '@educandu/educandu/ui/default-prop-types.js';
 import ObjectWidthSlider from '@educandu/educandu/components/object-width-slider.js';
@@ -15,11 +16,15 @@ import { swapItemsAt, removeItemAt, moveItem } from '@educandu/educandu/utils/ar
 import { useNumberWithUnitFormat } from '@educandu/educandu/components/locale-context.js';
 import FlipbookPageFlip from './flipbook-page-flip.js';
 
-const PAGE_TYPES = ['image', 'text', 'image+text'];
+const PAGE_TYPES = ['image', 'text', 'image+text', 'abc'];
 const IMAGE_SOURCE_TYPES = [SOURCE_TYPE.mediaLibrary, SOURCE_TYPE.roomMedia, SOURCE_TYPE.external, SOURCE_TYPE.wikimedia];
 
 function createPage(type) {
-  return { key: crypto.randomUUID(), type, image: '', text: '' };
+  const base = { key: crypto.randomUUID(), type, image: '', text: '' };
+  if (type === 'abc') {
+    return { ...base, markdown: '' };
+  }
+  return base;
 }
 
 export default function FlipbookEditor({ content, onContentChanged }) {
@@ -93,6 +98,25 @@ export default function FlipbookEditor({ content, onContentChanged }) {
             onChange={e => handlePageChange(page.key, { text: e.target.value })}
           />
         </Form.Item>
+      )}
+
+      {page.type === 'abc' && (
+        <>
+          <Form.Item label={t('abcCode')} {...FORM_ITEM_LAYOUT}>
+            <AbcInput
+              value={page.text}
+              debounced
+              onChange={e => handlePageChange(page.key, { text: e.target.value })}
+            />
+          </Form.Item>
+          <Form.Item label={<Info tooltip={t('abcTextInfo')}>{t('text')}</Info>} {...FORM_ITEM_LAYOUT}>
+            <MarkdownInput
+              value={page.markdown ?? ''}
+              renderAnchors
+              onChange={e => handlePageChange(page.key, { markdown: e.target.value })}
+            />
+          </Form.Item>
+        </>
       )}
     </ItemPanel>
   );

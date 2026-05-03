@@ -1,3 +1,4 @@
+import abcjs from 'abcjs';
 import PropTypes from 'prop-types';
 import PageFlipModule from 'page-flip';
 import React, { useEffect, useRef, useState } from 'react';
@@ -5,6 +6,8 @@ import ClientConfig from '@educandu/educandu/bootstrap/client-config.js';
 import { useService } from '@educandu/educandu/components/container-context.js';
 import { getAccessibleUrl } from '@educandu/educandu/utils/source-utils.js';
 import GithubFlavoredMarkdown from '@educandu/educandu/common/github-flavored-markdown.js';
+
+const ABC_OPTIONS = { paddingtop: 0, paddingbottom: 10, paddingright: 0, paddingleft: 0, responsive: 'resize' };
 
 const { PageFlip } = PageFlipModule;
 
@@ -23,7 +26,7 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
   const gfm = useService(GithubFlavoredMarkdown);
 
   const pagesKey = [
-    pages.map(p => `${p.key}:${p.type}:${p.image}:${p.text}`).join('|'),
+    pages.map(p => `${p.key}:${p.type}:${p.image}:${p.text}:${p.markdown ?? ''}`).join('|'),
     String(showCover),
     coverTitle,
     coverSubtitle,
@@ -100,10 +103,12 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
       bookEl.appendChild(buildFrontCoverEl());
     }
 
+    const abcRenderQueue = [];
+
     paddedPages.forEach(page => {
       const el = document.createElement('div');
       el.className = 'EP_Musikisum_Flipbook_Page';
-      if (page.type === 'text' || page.type === 'image+text') {
+      if (page.type === 'text' || page.type === 'image+text' || page.type === 'abc') {
         el.style.background = '#f9f6ee';
       }
 
@@ -121,12 +126,48 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
         el.appendChild(textEl);
       }
 
+      if (page.type === 'abc') {
+        const layoutEl = document.createElement('div');
+        layoutEl.className = 'EP_Musikisum_Flipbook_PageAbcLayout';
+
+        const notationEl = document.createElement('div');
+        notationEl.className = 'EP_Musikisum_Flipbook_PageAbcNotation';
+        notationEl.style.background = '#f9f6ee';
+
+        const markdownText = page.markdown ?? '';
+        const parts = markdownText.split('@ABC');
+
+        const makeTextEl = text => {
+          const div = document.createElement('div');
+          div.className = 'EP_Musikisum_Flipbook_PageAbcText Markdown';
+          div.innerHTML = gfm.render(text, { cdnRootUrl: clientConfig.cdnRootUrl, renderMedia: true });
+          return div;
+        };
+
+        if (parts.length > 1) {
+          if (parts[0].trim()) layoutEl.appendChild(makeTextEl(parts[0]));
+          layoutEl.appendChild(notationEl);
+          if (parts[1].trim()) layoutEl.appendChild(makeTextEl(parts[1]));
+        } else {
+          layoutEl.appendChild(notationEl);
+          if (markdownText.trim()) layoutEl.appendChild(makeTextEl(markdownText));
+        }
+
+        el.appendChild(layoutEl);
+
+        if (page.text) {
+          abcRenderQueue.push({ el: notationEl, code: page.text });
+        }
+      }
+
       bookEl.appendChild(el);
     });
 
     if (showCover) {
       bookEl.appendChild(buildBackCoverEl());
     }
+
+    abcRenderQueue.forEach(({ el, code }) => abcjs.renderAbc(el, code, ABC_OPTIONS));
 
     setTotalPages(coverCount + paddedPages.length);
 
@@ -190,7 +231,7 @@ FlipbookPageFlip.propTypes = {
   coverEdition: PropTypes.string,
   pages: PropTypes.arrayOf(PropTypes.shape({
     key: PropTypes.string.isRequired,
-    type: PropTypes.oneOf(['image', 'text', 'image+text']).isRequired,
+    type: PropTypes.oneOf(['image', 'text', 'image+text', 'abc']).isRequired,
     image: PropTypes.string,
     text: PropTypes.string
   })).isRequired
