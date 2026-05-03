@@ -73,7 +73,7 @@ Funded by 'Stiftung Innovation in der Hochschullehre'
 
 A project of the 'Hochschule für Musik und Theater München' (University for Music and Performing Arts)
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/d/d8/Logo_Hochschule_f%C3%BCr_Musik_und_Theater_M%C3%BCnchen_.png" alt="Logo der Hochschule für Musik und Theater München" width="200"/>
+<img src="https://upload.wikimedia.org/wikipedia/de/thumb/9/9b/Hochschule_f%C3%BCr_Musik_und_Theater_M%C3%BCnchen_logo.svg/330px-Hochschule_f%C3%BCr_Musik_und_Theater_M%C3%BCnchen_logo.svg.png" alt="Logo der Hochschule für Musik und Theater München" width="200"/>
 
 Project owner: Hochschule für Musik und Theater München  
 Project management: Ulrich Kaiser
