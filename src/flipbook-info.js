@@ -76,22 +76,34 @@ class FlipbookInfo {
 
   redactContent(content, targetRoomId) {
     const redactedContent = cloneDeep(content);
+    const redact = url => couldAccessUrlFromRoom(url, targetRoomId) ? url : '';
 
-    redactedContent.pages = redactedContent.pages.map(page => {
-      if (!page.image) {
-        return page;
-      }
-      return {
-        ...page,
-        image: couldAccessUrlFromRoom(page.image, targetRoomId) ? page.image : ''
-      };
-    });
+    redactedContent.pages = redactedContent.pages.map(page => ({
+      ...page,
+      image: page.image && !couldAccessUrlFromRoom(page.image, targetRoomId) ? '' : page.image,
+      text: this.gfm.redactCdnResources(page.text, redact)
+    }));
+
+    redactedContent.coverTitle = this.gfm.redactCdnResources(redactedContent.coverTitle, redact);
+    redactedContent.coverSubtitle = this.gfm.redactCdnResources(redactedContent.coverSubtitle, redact);
 
     return redactedContent;
   }
 
   getCdnResources(content) {
-    return content.pages.flatMap(page => page.image ? [page.image] : []);
+    const resources = [];
+
+    for (const page of content.pages) {
+      if (page.image) {
+        resources.push(page.image);
+      }
+      resources.push(...this.gfm.extractCdnResources(page.text));
+    }
+
+    resources.push(...this.gfm.extractCdnResources(content.coverTitle));
+    resources.push(...this.gfm.extractCdnResources(content.coverSubtitle));
+
+    return [...new Set(resources)].filter(Boolean);
   }
 }
 
