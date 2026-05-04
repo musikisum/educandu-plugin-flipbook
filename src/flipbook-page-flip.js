@@ -15,12 +15,13 @@ const ABC_OPTIONS = { paddingtop: 0, paddingbottom: 10, paddingright: 0, padding
 const { PageFlip } = PageFlipModule;
 
 const MIN_PAGES = 4;
+const PORTRAIT_THRESHOLD = 600;
 
 function createPadPage(index) {
   return { key: `__pad_${index}`, type: 'image', image: '', text: '' };
 }
 
-export default function FlipbookPageFlip({ pages, height, showCover, coverTitle, coverSubtitle, coverEdition, audioUrl, audioPlaybackRange, audioWidth, audioTimecodes }) {
+export default function FlipbookPageFlip({ pages, height, showCover, coverTitle, coverSubtitle, coverEdition, audioUrl, audioPlaybackRange, audioWidth, audioTimecodes, disablePortrait }) {
   const wrapperRef = useRef(null);
   const containerRef = useRef(null);
   const printContainerRef = useRef(null);
@@ -29,6 +30,9 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isSinglePage, setIsSinglePage] = useState(
+    () => !disablePortrait && typeof window !== 'undefined' && window.innerWidth < PORTRAIT_THRESHOLD
+  );
   const clientConfig = useService(ClientConfig);
   const gfm = useService(GithubFlavoredMarkdown);
   const { t } = useTranslation('musikisum/educandu-plugin-flipbook');
@@ -57,6 +61,22 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
   useEffect(() => {
     currentPageRef.current = currentPage;
   }, [currentPage]);
+
+  useEffect(() => {
+    if (disablePortrait) {
+      return () => {};
+    }
+    const container = containerRef.current;
+    if (!container) {
+      return () => {};
+    }
+    const observer = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect.width ?? 0;
+      setIsSinglePage(w > 0 && w < PORTRAIT_THRESHOLD);
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [disablePortrait]);
 
   const handleProgress = useCallback(progressMs => {
     if (!audioTimecodes?.length) {
@@ -287,13 +307,16 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
 
     setTotalPages(coverCount + paddedPages.length);
 
+    const containerWidth = container.offsetWidth;
+    const singlePageMode = !disablePortrait && containerWidth > 0 && containerWidth < PORTRAIT_THRESHOLD;
+
     let pageFlip;
     try {
       pageFlip = new PageFlip(bookEl, {
         width: 400,
         height: height ?? 550,
         size: 'stretch',
-        minWidth: 100,
+        minWidth: singlePageMode ? Math.ceil(containerWidth / 2) + 1 : 100,
         maxWidth: 1000,
         usePortrait: true,
         showCover: !!showCover,
@@ -323,7 +346,7 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagesKey, height, clientConfig, gfm]);
+  }, [pagesKey, height, clientConfig, gfm, isSinglePage]);
 
   return (
     <div ref={wrapperRef} className="EP_Musikisum_Flipbook_Container">
@@ -390,7 +413,8 @@ FlipbookPageFlip.defaultProps = {
   audioUrl: '',
   audioPlaybackRange: [0, 1],
   audioWidth: 100,
-  audioTimecodes: []
+  audioTimecodes: [],
+  disablePortrait: false
 };
 
 FlipbookPageFlip.propTypes = {
@@ -403,6 +427,7 @@ FlipbookPageFlip.propTypes = {
   audioPlaybackRange: PropTypes.arrayOf(PropTypes.number),
   audioWidth: PropTypes.number,
   audioTimecodes: PropTypes.arrayOf(PropTypes.number),
+  disablePortrait: PropTypes.bool,
   pages: PropTypes.arrayOf(PropTypes.shape({
     key: PropTypes.string.isRequired,
     type: PropTypes.oneOf(['image', 'text', 'image+text', 'abc']).isRequired,

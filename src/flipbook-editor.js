@@ -315,6 +315,7 @@ export default function FlipbookEditor({ content, onContentChanged }) {
         <div className="EP_Musikisum_Flipbook_EditorPreviewLabel">{t('preview')}</div>
         <div className="EP_Musikisum_Flipbook_EditorPreviewBook">
           <FlipbookPageFlip
+            disablePortrait
             pages={pages}
             height={height}
             showCover={showCover}

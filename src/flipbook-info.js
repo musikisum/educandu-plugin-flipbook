@@ -57,13 +57,13 @@ class FlipbookInfo {
     const pageSchema = joi.object({
       key: joi.string().required(),
       type: joi.string().valid('image', 'text', 'image+text', 'abc').required(),
-      image: joi.string().allow('').optional(),
-      text: joi.string().allow('').optional(),
-      markdown: joi.string().allow('').optional(),
-      abcSize: joi.number().optional(),
-      abcPosition: joi.string().optional(),
-      imagePosition: joi.string().valid('none', 'left', 'right', 'top', 'bottom').optional(),
-      imageSize: joi.number().optional()
+      image: joi.string().allow('', null).optional(),
+      text: joi.string().allow('', null).optional(),
+      markdown: joi.string().allow('', null).optional(),
+      abcSize: joi.number().allow(null).optional(),
+      abcPosition: joi.string().allow(null).optional(),
+      imagePosition: joi.string().valid('none', 'left', 'right', 'top', 'bottom').allow(null).optional(),
+      imageSize: joi.number().allow(null).optional()
     });
 
     const schema = joi.object({
