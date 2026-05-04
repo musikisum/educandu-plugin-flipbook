@@ -101,3 +101,9 @@ musikisum/educandu-plugin-flipbook:
   printButton:
     en: Print / Save as PDF
     de: Drucken / Als PDF speichern
+  autoFlip:
+    en: Auto-flip
+    de: Auto-Blättern
+  manualFlip:
+    en: Manual
+    de: Manuell

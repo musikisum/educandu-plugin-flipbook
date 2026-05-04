@@ -27,9 +27,11 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
   const printContainerRef = useRef(null);
   const pageFlipRef = useRef(null);
   const currentPageRef = useRef(0);
+  const isPlayingRef = useRef(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [autoFlip, setAutoFlip] = useState(true);
   const [isSinglePage, setIsSinglePage] = useState(
     () => !disablePortrait && typeof window !== 'undefined' && window.innerWidth < PORTRAIT_THRESHOLD
   );
@@ -63,6 +65,10 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
   }, [currentPage]);
 
   useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  useEffect(() => {
     if (disablePortrait) {
       return () => {};
     }
@@ -79,7 +85,7 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
   }, [disablePortrait]);
 
   const handleProgress = useCallback(progressMs => {
-    if (!audioTimecodes?.length) {
+    if (!isPlayingRef.current || !autoFlip || !audioTimecodes?.length) {
       return;
     }
     const progressSecs = progressMs / 1000;
@@ -95,7 +101,7 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
       currentPageRef.current = targetFlipPage;
       pageFlipRef.current?.flip(targetFlipPage);
     }
-  }, [audioTimecodes, showCover]);
+  }, [audioTimecodes, showCover, autoFlip]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -352,36 +358,51 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
     <div ref={wrapperRef} className="EP_Musikisum_Flipbook_Container">
       <div className="EP_Musikisum_Flipbook_BookArea">
         <div ref={containerRef} className="EP_Musikisum_Flipbook_Book" />
-        {!!isPlaying && <div className="EP_Musikisum_Flipbook_PlayingOverlay" />}
+        {!!isPlaying && !!autoFlip && <div className="EP_Musikisum_Flipbook_PlayingOverlay" />}
       </div>
       {!!(pages.length || showCover) && (
         <div className="EP_Musikisum_Flipbook_Controls">
-          <button
-            type="button"
-            className="EP_Musikisum_Flipbook_NavBtn"
-            disabled={currentPage === 0 || isPlaying}
-            onClick={() => pageFlipRef.current?.flipPrev()}
-            >
-            ‹
-          </button>
-          <span className="EP_Musikisum_Flipbook_PageIndicator">
-            {currentPage + 1} / {totalPages}
-          </span>
-          <button
-            type="button"
-            className="EP_Musikisum_Flipbook_NavBtn"
-            disabled={currentPage >= totalPages - 1 || isPlaying}
-            onClick={() => pageFlipRef.current?.flipNext()}
-            >
-            ›
-          </button>
-          <button
-            type="button"
-            className="EP_Musikisum_Flipbook_PrintBtn"
-            onClick={handlePrint}
-            >
-            {t('printButton')}
-          </button>
+          <div className="EP_Musikisum_Flipbook_ControlsLeft">
+            {!!(audioUrl && audioTimecodes?.some(tc => tc !== null)) && (
+              <button
+                type="button"
+                className={`EP_Musikisum_Flipbook_AutoFlipBtn${autoFlip ? ' is-active' : ''}`}
+                onClick={() => setAutoFlip(prev => !prev)}
+                >
+                {autoFlip ? t('autoFlip') : t('manualFlip')}
+              </button>
+            )}
+          </div>
+          <div className="EP_Musikisum_Flipbook_ControlsCenter">
+            <button
+              type="button"
+              className="EP_Musikisum_Flipbook_NavBtn"
+              disabled={currentPage === 0 || (isPlaying && autoFlip)}
+              onClick={() => pageFlipRef.current?.flipPrev()}
+              >
+              ‹
+            </button>
+            <span className="EP_Musikisum_Flipbook_PageIndicator">
+              {currentPage + 1} / {totalPages}
+            </span>
+            <button
+              type="button"
+              className="EP_Musikisum_Flipbook_NavBtn"
+              disabled={currentPage >= totalPages - 1 || (isPlaying && autoFlip)}
+              onClick={() => pageFlipRef.current?.flipNext()}
+              >
+              ›
+            </button>
+          </div>
+          <div className="EP_Musikisum_Flipbook_ControlsRight">
+            <button
+              type="button"
+              className="EP_Musikisum_Flipbook_PrintBtn"
+              onClick={handlePrint}
+              >
+              {t('printButton')}
+            </button>
+          </div>
         </div>
       )}
       <div ref={printContainerRef} className="EP_Musikisum_Flipbook_PrintView" />
