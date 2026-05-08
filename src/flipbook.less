@@ -211,6 +211,14 @@
     min-width: 60px;
     text-align: center;
   }
+
+  .EP_Musikisum_Flipbook_PageText,
+  .EP_Musikisum_Flipbook_PageAbcLayout,
+  .EP_Musikisum_Flipbook_PageImageText,
+  .EP_Musikisum_Flipbook_CoverContent {
+    zoom: var(--ep-flipbook-content-scale, 1);
+    height: calc(100% / var(--ep-flipbook-content-scale, 1));
+  }
 }
 
 .EP_Musikisum_Flipbook_Editor {
@@ -399,6 +407,7 @@
       .EP_Musikisum_Flipbook_PageText,
       .EP_Musikisum_Flipbook_PageAbcLayout,
       .EP_Musikisum_Flipbook_PageImageText {
+        zoom: 1 !important;
         height: auto !important;
         overflow: visible !important;
         padding: 0 !important;

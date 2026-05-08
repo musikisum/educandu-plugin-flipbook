@@ -16,6 +16,7 @@ const { PageFlip } = PageFlipModule;
 
 const MIN_PAGES = 4;
 const PORTRAIT_THRESHOLD = 600;
+const CONTENT_SCALE_REF = 500;
 
 function createPadPage(index) {
   return { key: `__pad_${index}`, type: 'image', image: '', text: '' };
@@ -76,9 +77,21 @@ export default function FlipbookPageFlip({ pages, height, showCover, coverTitle,
     if (!container) {
       return () => {};
     }
+
+    const updateContentScale = w => {
+      if (w > 0 && wrapperRef.current) {
+        const pageWidth = w < PORTRAIT_THRESHOLD ? w : w / 2;
+        const scale = Math.min(1, pageWidth / CONTENT_SCALE_REF);
+        wrapperRef.current.style.setProperty('--ep-flipbook-content-scale', String(scale));
+      }
+    };
+
+    updateContentScale(container.offsetWidth);
+
     const observer = new ResizeObserver(entries => {
       const w = entries[0]?.contentRect.width ?? 0;
       setIsSinglePage(w > 0 && w < PORTRAIT_THRESHOLD);
+      updateContentScale(w);
     });
     observer.observe(container);
     return () => observer.disconnect();

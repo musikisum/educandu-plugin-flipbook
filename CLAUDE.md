@@ -45,7 +45,10 @@ Jede Seite ist einer von vier Typen:
 - **MediaPlayer** (educandu-Komponente) statt raw `<audio>` → unterstützt HTML5, externe URLs und **YouTube** (`SOURCE_TYPE.youtube` in `AUDIO_SOURCE_TYPES`)
 - **Von/Bis**: `audioPlaybackRange [0,1]`; `MediaRangeSelector` direkt inline im Editor (kein Modal)
 - **Timecode-Sync**: `onProgress(ms)` liefert Millisekunden relativ zum Ausschnittsbeginn → `progressMs / 1000 >= timecodes[i]`. `currentPageRef.current` wird sofort beim Flip gesetzt (verhindert wiederholtes Flip alle 20ms durch das 20ms-Interval des MediaPlayers)
-- **Blättern sperren**: `isPlaying`-State via `onPlay`/`onPause`/`onEnded`; transparentes Overlay (`.EP_Musikisum_Flipbook_PlayingOverlay`) auf `.EP_Musikisum_Flipbook_BookArea` — liegt nicht über dem Player
+- **Auto/Manuell-Toggle**: `autoFlip`-State (default `true`). Button erscheint nur wenn `audioUrl` und mindestens ein Timecode gesetzt. Bei `autoFlip=false`: kein automatisches Blättern, Overlay deaktiviert, Nav-Buttons immer aktiv.
+- **`isPlayingRef`-Pattern**: `isPlaying`-State wird per `useEffect` in `isPlayingRef.current` gespiegelt, damit `handleProgress` (useCallback) den Zustand ohne Dep-Array-Eintrag lesen kann — verhindert Callback-Neuerstellung bei jedem Play/Pause.
+- **`handleProgress`-Guard**: `if (!isPlayingRef.current || !autoFlip || !audioTimecodes?.length) return;` — kein Flip wenn gestoppt oder Auto-Flip deaktiviert
+- **Blättern sperren**: `isPlaying && autoFlip` → transparentes Overlay; Nav-Buttons `disabled` wenn `isPlaying && autoFlip`
 - **Breite**: `audioWidth` mit `ObjectWidthSlider`; `style={{ width: '${audioWidth}%' }}` auf dem Wrapper-Div; `margin: auto` zentriert
 - URL-Wechsel setzt `audioPlaybackRange` auf `[0, 1]` zurück
 - Timecodes im Modal: Format `m:ss`, eine Eingabe pro Seite. Im Doppelseitenmodus (breite Displays) braucht man nur jeden zweiten Timecode.
@@ -66,6 +69,43 @@ Jede Seite ist einer von vier Typen:
 - `pagesKey` verknüpft alle Seitenfelder als String — löst komplette Neuinitialisierung bei jeder inhaltlichen Änderung aus
 - `getAccessibleUrl` aus Educandu für alle Bild- und Audio-URLs — nie direkte URLs verwenden
 - Joi-Schema mit `allowUnknown: true` — Rückwärtskompatibilität mit altem Content
+- Alle optionalen Seitenfelder im Joi-Schema erlauben `null`: `.allow('', null).optional()` (bzw. `.allow(null).optional()` für Number/String-Enums) — Pflicht wegen alter gespeicherter Inhalte
+
+## Portrait-Modus (Einzelseite auf kleinen Displays)
+- `PORTRAIT_THRESHOLD = 600` (px) in `flipbook-page-flip.js`
+- page-flip wechselt in Portrait, wenn `containerWidth < 2 * minWidth`. `usePortrait: true` allein reicht nicht zuverlässig.
+- **Trick**: `minWidth: isSinglePage ? Math.ceil(containerWidth / 2) + 1 : 100` — über der Hälfte erzwingt Portrait-Modus
+- `isSinglePage`-State wird im `ResizeObserver` gesetzt: `setIsSinglePage(w > 0 && w < PORTRAIT_THRESHOLD)`
+- **`disablePortrait`-Prop** auf `FlipbookPageFlip`: Editor-Preview (320px) bleibt immer zweiseitig; ResizeObserver und `isSinglePage`-Logik werden übersprungen wenn `disablePortrait=true`
+
+## Dynamisches Content-Scaling (Display-Ansicht)
+- `CONTENT_SCALE_REF = 500` (px) in `flipbook-page-flip.js` — Referenzbreite für 1×-Zoom
+- `ResizeObserver` (im selben Effect wie Portrait-Logik, nur wenn `!disablePortrait`) berechnet und setzt CSS-Variable auf `wrapperRef.current`:
+  ```js
+  const pageWidth = w < PORTRAIT_THRESHOLD ? w : w / 2;
+  const scale = Math.min(1, pageWidth / CONTENT_SCALE_REF);
+  wrapperRef.current.style.setProperty('--ep-flipbook-content-scale', String(scale));
+  ```
+- Initiales Setzen beim Mount: `updateContentScale(container.offsetWidth)`
+- CSS in `.EP_Musikisum_Flipbook_Display` auf `PageText`, `PageAbcLayout`, `PageImageText`, `CoverContent`:
+  ```css
+  zoom: var(--ep-flipbook-content-scale, 1);
+  height: calc(100% / var(--ep-flipbook-content-scale, 1));
+  ```
+  Der `height`-Trick kompensiert: das Div ist `100%/scale` groß, nach Zoom ergibt das wieder 100% Füllhöhe.
+- Kein Upscaling — `Math.min(1, ...)` — auf großen Displays bleibt scale=1
+- **Print-Fix**: `zoom: 1 !important` in `@media print` für dieselben Divs (CSS-Variable würde sonst Druck-Scaling beeinflussen)
+
+## Controls-Layout (drei Spalten)
+```
+[Auto-Blättern | Manuell]    [◀ Seite X/N ▶]    [Drucken]
+    ControlsLeft                ControlsCenter      ControlsRight
+```
+- `.EP_Musikisum_Flipbook_Controls`: `display: flex; align-items: center`
+- `ControlsLeft` / `ControlsRight`: `flex: 1`
+- `ControlsCenter`: `display: flex; align-items: center; gap: 16px`
+- `ControlsRight`: `display: flex; justify-content: flex-end`
+- Auto-Flip-Button mit `.is-active`-Klasse (blaue Umrandung + Hintergrund `#e6f4ff`) wenn aktiv
 
 ## GitHub Actions
 - `verify.yml` — jeder Push: lint → test → build
@@ -74,27 +114,49 @@ Jede Seite ist einer von vier Typen:
 ## Wichtige Konvention
 Educandu-Framework-Dateien werden **nie verändert** — nur öffentliche APIs (`useService`, `getAccessibleUrl`, Komponenten aus `components/` usw.).
 
-## Status (Stand 2026-05-03)
-Alle Features implementiert und getestet:
+## Status (Stand 2026-05-08)
+
+### v1.4.0 (committed, gepusht, getaggt)
 - Alle vier Seitentypen (image, text, image+text, abc) ✓
 - Buchdeckel (showCover, coverTitle, coverSubtitle, coverEdition) ✓
 - Drag&Drop-Reorder ✓
-- Live-Preview im Editor ✓
-- Audioplayer (HTML5 + YouTube, Von/Bis, Timecode-Sync, Breiten-Slider, Blättern-Sperre) ✓
+- Live-Preview im Editor (320px, zoom: 0.25, immer zweiseitig via `disablePortrait`) ✓
+- Audioplayer (HTML5 + YouTube, Von/Bis, Timecode-Sync, Breiten-Slider) ✓
+- Auto/Manuell-Toggle für Audio-Blättern ✓
+- Controls drei-spaltig (Auto/Manuell | Nav | Druck) ✓
 - PDF-Druck ✓
-- Plugin-Icon (FlipbookIcon, React SVG, Farben an educandu Image-Icon angelehnt) ✓
+- Plugin-Icon (FlipbookIcon, React SVG) ✓
+- Portrait-Modus auf kleinen Displays (PORTRAIT_THRESHOLD=600) ✓
+- Joi-Schema: alle optionalen Felder erlauben `null` ✓
 - 21 Tests, ESLint sauber ✓
 - GitHub Actions Workflows ✓
 
-## Bekannte Limitation: Editor-Preview
-Der Preview (320px) zeigt Text/ABC-Seiten nicht maßstabsgetreu — CSS-Schriftgrößen skalieren nicht mit page-flip. Workaround: in Display-Ansicht prüfen.
+### v1.5.0 (in Arbeit — noch NICHT committed)
+Implementiert, aber noch nicht getestet/committed:
+- **Dynamisches Content-Scaling**: CSS-Variable `--ep-flipbook-content-scale`, ResizeObserver, CONTENT_SCALE_REF=500
+- **Print-Fix**: `zoom: 1 !important` in `@media print`
+
+**Noch zu testen vor Commit:**
+- Audio + Timecodes mit aktivem Scaling
+- Resize während Audio läuft
+- Druck / PDF (Print-Fix)
+
+**Bekanntes Problem (nicht kritisch):** Cover-Feld "Ausgabe" (`coverEdition`) verschwindet beim Zoomen.
 
 ## Bekanntes Vitest-Quirk
 Erster Lauf nach Cache-Leerung kann mit "Expression expected" (Rollup) fehlschlagen → einfach nochmal `npx vitest run` ausführen.
 
 ## Roadmap
 - v1.0.0 auf npm veröffentlicht ✓
-- v1.2.0 — Plugin-Icon hinzugefügt
+- v1.2.0 — Plugin-Icon hinzugefügt ✓
+- v1.3.0 — Joi null-Fix, Portrait-Modus, Editor-Preview-Scaling ✓
+- v1.4.0 — Auto/Manuell-Toggle, Controls-Layout drei-spaltig, disablePortrait-Fix ✓
+- v1.5.0 — Dynamisches Content-Scaling für Display (in Arbeit)
+
+## Editor-Preview
+- Feste Breite 320px, immer zweiseitig (`disablePortrait={true}` auf `FlipbookPageFlip`)
+- Zoom: `zoom: 0.25; height: 400%` auf `PageText`, `PageAbcLayout`, `PageImageText`, `CoverContent` im Kontext `.EP_Musikisum_Flipbook_EditorPreviewBook` — kein dynamisches Scaling, fixer Wert
+- Bilder in Image+Text: Selektor `.EP_Musikisum_Flipbook_Page > img` (direktes Kind) — verhindert, dass `height: 100%` auf Bilder innerhalb von Layout-Divs wirkt
 
 ## PDF-Druck
 
